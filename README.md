@@ -14,11 +14,12 @@ Una formación de invasores desciende por la pantalla. Muévete y destrúyelos a
 | Disparar | Espacio | Botón «Disparar» |
 | Pausar / reanudar | P o Escape | Botón «Pausar» |
 
-- **Puntos:** círculo 10, triángulo 20, rombo 30, nave nodriza 100.
-- **Vidas:** pierdes una al recibir un disparo; después quedas protegido 1,6 s.
+- **Puntos:** pulpo 10, cangrejo 20, calamar 30, platillo nodriza 100.
+- **Vidas:** se muestran como corazones; pierdes uno al recibir un disparo y después quedas protegido 1,6 s.
 - **Oleadas:** cada oleada trae más filas y más velocidad.
 - **Fin:** sin vidas, invasión o botón *Finalizar*.
-- **Ajustes:** dificultad (se aplica a la siguiente partida), controles, paleta de enemigos, alto contraste y sonido (silenciado por defecto).
+- **Ajustes:** deslizador de dificultad (se aplica a la siguiente partida) e interruptores de controles (A/D), tema oscuro, alto contraste y sonido (silenciado por defecto).
+- **Pantalla completa:** el juego ocupa todo el espacio bajo la cabecera, sin marco, y se adapta al móvil (vertical y apaisado), tableta y escritorio. En pantallas anchas caben más enemigos.
 
 ## Cumplimiento del enunciado
 
@@ -36,9 +37,10 @@ Una formación de invasores desciende por la pantalla. Muévete y destrúyelos a
 | Vinculación moderna | Un `<link>` a `style.css` (con `@import` ordenados) y un `<script type="module">` |
 | HTML semántico | `header`, `main`, `dl`, `dialog`, `section`, ARIA |
 | Selectores mantenibles | BEM + hooks `data-*` para JS |
-| Composición | Grid (página, mandos) y Flexbox (cabecera, grupos, zona de juego) |
-| `position` justificado | Cortina sobre el canvas y enlace de salto (`layout.css`) |
-| Estrategia cromática | Interfaz monocromática + enemigos triádicos |
+| Composición | Grid (página, cabecera con áreas, escenario, mandos) y Flexbox (marcadores, grupos, zona de juego) |
+| `position` justificado | Cortina sobre el canvas, enlace de salto y texto solo para lectores de pantalla (`layout.css`) |
+| Responsive | Mundo de juego que se adapta a la proporción del canvas (`Mundo.js`) + 3 puntos de corte de cabecera |
+| Estrategia cromática | Interfaz monocromática (tema oscuro y claro) + enemigos triádicos fijos |
 | Estrategia tipográfica | Dos fuentes contrastadas (monoespaciada + sans) |
 | Estrategia espacial | `rem`, escala de espacios, Gestalt |
 
@@ -56,8 +58,9 @@ El modelo no conoce el DOM ni el canvas y se puede ejecutar en Node. Los detalle
 
 - Juego completo por teclado; controles táctiles en dispositivos táctiles.
 - Diálogos con `<dialog>` nativo (foco atrapado, Escape, foco devuelto).
-- Contraste de texto ≥ 4,5:1 y de bordes ≥ 3:1 (medido); modo alto contraste.
-- Los enemigos se distinguen por **forma y color**, nunca solo por color.
+- Contraste de texto ≥ 4,5:1 y de gráficos ≥ 3:1, medido en los cuatro modos (oscuro, claro y sus altos contrastes).
+- Los enemigos se distinguen por **silueta y color**, nunca solo por color; las vidas perdidas se ven como corazón vacío.
+- Ajustes con controles nativos (`range` y `checkbox` con `role="switch"`): teclado y lectores de pantalla sin código extra.
 - Canvas con `aria-label` dinámico y región `aria-live` para oleadas, impactos y fin de partida.
 - `prefers-reduced-motion`: sin partículas ni parallax.
 - Pausa automática al cambiar de pestaña o abrir un diálogo.

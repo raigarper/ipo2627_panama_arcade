@@ -2,12 +2,11 @@
  * @file Nave.js
  * @capa Modelo
  * @resumen Nave del jugador: movimiento horizontal, cadencia de disparo, vidas e invulnerabilidad temporal.
- * @depende Entidad, Mundo
+ * @depende Entidad
  * @usadoPor JuegoModel, LienzoView (solo lectura)
  */
 
 import { Entidad } from "./Entidad.js";
-import { MUNDO } from "./Mundo.js";
 
 /** Velocidad horizontal de la nave, en unidades/s. */
 const VELOCIDAD = 260;
@@ -19,6 +18,13 @@ const DURACION_INVULNERABLE = 1.6;
 const MARGEN = 8;
 
 export class Nave extends Entidad {
+    /** Anchura de la nave: 13 celdas de sprite × 3 unidades. */
+    static ANCHO = 39;
+    /** Altura de la nave: 8 celdas de sprite × 3 unidades. */
+    static ALTO = 24;
+    /** Distancia entre el borde inferior del mundo y la parte superior de la nave. */
+    static DISTANCIA_BASE = 48;
+
     /** @type {number} Vidas restantes. */
     vidas;
     /** @type {number} Segundos que faltan para poder volver a disparar. */
@@ -29,10 +35,14 @@ export class Nave extends Entidad {
     /**
      * Coloca la nave centrada en la parte baja del mundo.
      * @param {number} vidas - Vidas iniciales (según la dificultad).
+     * @param {number} anchoMundo - Ancho lógico del mundo.
+     * @param {number} altoMundo - Alto lógico del mundo.
      */
-    constructor(vidas) {
-        super((MUNDO.ancho - 36) / 2, MUNDO.alto - 56, 36, 24);
+    constructor(vidas, anchoMundo, altoMundo) {
+        super(0, 0, Nave.ANCHO, Nave.ALTO);
         this.vidas = vidas;
+        this.x = (anchoMundo - this.ancho) / 2;
+        this.y = altoMundo - Nave.DISTANCIA_BASE;
     }
 
     /**
@@ -50,14 +60,30 @@ export class Nave extends Entidad {
     }
 
     /**
+     * Recoloca la nave tras un cambio de tamaño del mundo: vuelve a la parte
+     * baja y se mantiene dentro de los bordes laterales (o se centra, si aún no se juega).
+     * @param {number} anchoMundo - Nuevo ancho lógico del mundo.
+     * @param {number} altoMundo - Nuevo alto lógico del mundo.
+     * @param {boolean} [centrar] - `true` para centrarla en horizontal (antes de empezar la partida).
+     * @returns {void}
+     */
+    colocar(anchoMundo, altoMundo, centrar = false) {
+        this.y = altoMundo - Nave.DISTANCIA_BASE;
+        this.x = centrar
+            ? (anchoMundo - this.ancho) / 2
+            : Math.min(Math.max(this.x, MARGEN), anchoMundo - MARGEN - this.ancho);
+    }
+
+    /**
      * Desplaza la nave en horizontal, sin salir del mundo.
      * @param {number} direccion - -1 izquierda, 0 quieta, +1 derecha.
      * @param {number} dt - Segundos transcurridos en este paso.
+     * @param {number} anchoMundo - Ancho lógico del mundo.
      * @returns {void}
      */
-    mover(direccion, dt) {
+    mover(direccion, dt, anchoMundo) {
         const destino = this.x + direccion * VELOCIDAD * dt;
-        const maximo = MUNDO.ancho - MARGEN - this.ancho;
+        const maximo = anchoMundo - MARGEN - this.ancho;
         this.x = Math.min(Math.max(destino, MARGEN), maximo);
     }
 

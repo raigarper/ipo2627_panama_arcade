@@ -1,36 +1,46 @@
 /**
  * @file layout.css
  * @capa Estilos (3/4)
- * @resumen Composición de la página (Grid y Flexbox) y ÚNICO lugar donde se usa `position`.
+ * @resumen Composición de la página (Grid y Flexbox) con el juego a pantalla completa, y ÚNICO lugar donde se usa `position`.
  * @depende variables.css
  * @usadoPor style.css
  *
  * CRITERIO DE COMPOSICIÓN
- *   - Estructura de la página (cabecera + juego): GRID, es una plantilla de filas.
- *   - Cabecera, grupos de botones, zona de juego, marcadores: FLEXBOX, son
- *     disposiciones unidimensionales (cosas en una línea o en una columna).
+ *   - Página (cabecera + juego): GRID de dos filas. La cabecera mide lo que
+ *     necesita y el juego se lleva TODO el resto (`minmax(0, 1fr)`).
+ *   - Cabecera: GRID con áreas con nombre (identidad | hud | mandos), porque
+ *     cambia de 3 columnas a 2 filas según el ancho. Es una plantilla, no una línea.
+ *   - Marcadores, grupos de botones y zona de juego: FLEXBOX, son disposiciones
+ *     unidimensionales (cosas en una línea o en una columna).
+ *   - Escenario (contiene el canvas): GRID de una celda, para que el canvas la
+ *     rellene sin depender de porcentajes de alturas indefinidas.
  *   - Mandos táctiles (izquierda | disparo | derecha): GRID de 3 columnas,
  *     porque el botón central debe ser más ancho que los laterales.
  *
  * POSICIONAMIENTO JUSTIFICADO (`position`)
  *   Solo se usa donde algo debe SALIR DEL FLUJO y flotar sin desplazar nada:
- *   1. `.escenario` (relative) + `.escenario__cortina` (absolute): el mensaje
- *      de "Listo / Pausa" flota sobre el canvas sin cambiar su tamaño.
- *   2. `.salto` (absolute): enlace de "Saltar al juego", fuera de pantalla
- *      hasta que recibe el foco.
+ *   1. `.escenario` (relative) + `.escenario__cortina` (absolute): el mensaje de
+ *      inicio/pausa flota sobre el canvas sin cambiar su tamaño.
+ *   2. `.salto` (absolute): enlace de "Saltar al juego", fuera de pantalla hasta
+ *      que recibe el foco.
+ *   3. `.visualmente-oculto` (absolute): contenido solo para lectores de pantalla.
  *   Nunca se usa `position` para colocar el canvas, los botones ni los marcadores.
  *
  * RESPONSIVE
- *   Sin `overflow: hidden` ni alturas fijas en la página: si la pantalla es
- *   baja, la página hace scroll en vez de recortar contenido. El canvas se
- *   dimensiona con `dvh` y mantiene la proporción 3:4 con `aspect-ratio`.
+ *   El juego ocupa siempre todo el espacio bajo la cabecera, sin marco. La
+ *   página mide 100dvh y hace scroll solo si el contenido no cabe (nunca
+ *   recorta). El modelo adapta el tamaño del mundo a la proporción del canvas,
+ *   así que el mismo código sirve en móvil vertical, apaisado y escritorio.
+ *   Puntos de corte: 64em (cabecera en 2 filas), 40em (cabecera en 3 filas) y
+ *   altura ≤ 30em (móvil apaisado: cabecera compacta de una sola fila).
  */
 
-/* ---------- Página: Grid de dos filas (cabecera | juego) ---------- */
+/* ---------- Página: Grid de dos filas (cabecera | juego a pantalla completa) ---------- */
 .pagina {
     display: grid;
-    grid-template-rows: auto 1fr;
-    min-block-size: 100dvh;
+    grid-template-rows: auto minmax(0, 1fr);
+    block-size: 100dvh;
+    overflow: auto;
     background: var(--color-fondo);
     color: var(--color-texto);
     font-family: var(--fuente-texto);
@@ -54,12 +64,12 @@
     transform: translateY(0);
 }
 
-/* ---------- Cabecera: Flexbox con tres grupos (identidad | marcadores | mandos) ---------- */
+/* ---------- Cabecera: Grid con áreas con nombre ---------- */
 .cabecera {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-areas: "identidad hud mandos";
     align-items: center;
-    justify-content: space-between;
     gap: var(--espacio-s) var(--espacio-l);
     padding: var(--espacio-s) var(--espacio-m);
     background: var(--color-panel);
@@ -67,19 +77,25 @@
 }
 
 .cabecera__identidad {
+    grid-area: identidad;
     display: flex;
     flex-direction: column;
 }
 
-.cabecera__marcadores {
+.cabecera__hud {
+    grid-area: hud;
     display: flex;
+    align-items: center;
+    justify-content: center;
     gap: var(--espacio-l);
 }
 
 .cabecera__mandos {
+    grid-area: mandos;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
+    justify-content: flex-end;
     gap: var(--espacio-s) var(--espacio-m);
 }
 
@@ -90,24 +106,22 @@
     gap: var(--espacio-xs);
 }
 
-/* ---------- Zona de juego: Flexbox en columna, centrada ---------- */
+/* ---------- Zona de juego: Flexbox en columna; el escenario se queda con todo el espacio ---------- */
 .zona-juego {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: var(--espacio-s);
-    padding: var(--espacio-s) var(--espacio-m) var(--espacio-m);
+    min-block-size: 0;
 }
 
 /* ---------- Escenario: ancla del canvas y de la cortina ----------
-   El ancho sale de la ALTURA disponible (100dvh − lo reservado) × 3/4, con un
-   mínimo de 16rem y sin superar el 100% del contenedor. Así el canvas cabe en
-   pantalla en vertical y en horizontal sin recortes. */
+   Grid de una celda que se estira con `flex: 1`: el canvas la rellena al 100%.
+   No tiene borde, radio ni márgenes: el juego es la pantalla. */
 .escenario {
     position: relative;
-    inline-size: min(100%, max(16rem, (100dvh - var(--alto-reservado)) * 0.75));
-    aspect-ratio: 3 / 4;
+    flex: 1 1 0;
+    min-block-size: var(--alto-minimo-escenario);
+    display: grid;
+    grid-template: minmax(0, 1fr) / minmax(0, 1fr);
 }
 
 .escenario__lienzo {
@@ -124,7 +138,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: var(--espacio-xs);
+    gap: var(--espacio-s);
     padding: var(--espacio-m);
     text-align: center;
 }
@@ -134,12 +148,28 @@
     display: none;
 }
 
+/* Pista de teclas dentro de la cortina: Flexbox con salto de línea. */
+.escenario__teclas {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--espacio-xs) var(--espacio-m);
+}
+
+.tecla-grupo {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--espacio-xs);
+}
+
 /* ---------- Mandos táctiles: Grid de 3 columnas (central más ancha) ---------- */
 .mandos {
     display: none;
-    inline-size: min(100%, 24rem);
     grid-template-columns: 1fr 2fr 1fr;
     gap: var(--espacio-s);
+    padding: var(--espacio-s) var(--espacio-m);
+    background: var(--color-panel);
+    border-block-start: var(--borde-fino) solid var(--color-borde);
 }
 
 @media (pointer: coarse) {
@@ -163,13 +193,75 @@
     color: var(--sonda);
 }
 
-/* ---------- Pantallas estrechas ---------- */
+/* ---------- Pantallas medianas: la cabecera pasa a 2 filas (identidad | mandos, y debajo el marcador) ---------- */
+@media (width < 64em) {
+    .cabecera {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas:
+            "identidad mandos"
+            "hud hud";
+    }
+}
+
+/* ---------- Pantallas estrechas: 3 filas apiladas, todo centrado ---------- */
 @media (width < 40em) {
     .cabecera {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas:
+            "identidad"
+            "hud"
+            "mandos";
         padding-inline: var(--espacio-s);
+        text-align: center;
     }
 
-    .cabecera__marcadores {
+    .cabecera__identidad {
+        align-items: center;
+    }
+
+    .cabecera__mandos {
+        justify-content: center;
+    }
+
+    .cabecera__hud {
         gap: var(--espacio-m);
+    }
+}
+
+/* ---------- Móvil apaisado (poca altura): cabecera compacta de una sola fila, sin título ---------- */
+@media (height <= 30em) {
+    .cabecera {
+        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-areas: "hud mandos";
+        gap: var(--espacio-xs) var(--espacio-m);
+        padding-block: var(--espacio-xs);
+        text-align: start;
+    }
+
+    .cabecera__identidad {
+        display: none;
+    }
+
+    .cabecera__mandos {
+        justify-content: flex-end;
+    }
+
+    .cabecera__hud {
+        gap: var(--espacio-m);
+    }
+
+    /* Todo más pequeño: los tamaños salen de variables, así que basta redefinirlas aquí. */
+    .pagina {
+        --alto-control: 2rem;
+        --ancho-puntos: 5rem;
+        --texto-puntos: 1.75rem;
+        --texto-marcador: 1.15rem;
+        --texto-titulo-cortina: 1.35rem;
+    }
+
+    /* La pantalla de inicio se reduce a título y botón; las teclas siguen en la ayuda. */
+    .escenario__texto,
+    .escenario__teclas {
+        display: none;
     }
 }

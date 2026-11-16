@@ -1,26 +1,26 @@
 /**
  * @file AyudaView.js
  * @capa Vista
- * @resumen Diálogo de ayuda con las reglas del juego, los controles y la leyenda de enemigos.
- * @depende Dialogo, formaEnemigo
+ * @resumen Diálogo de ayuda con las reglas del juego, los controles y la leyenda de enemigos con sus sprites reales.
+ * @depende Dialogo, spriteSvg
  * @usadoPor app.js, AppController
  */
 
 import { Dialogo } from "./Dialogo.js";
-import { crearFormaSvg } from "./formaEnemigo.js";
+import { crearSpriteSvg } from "./spriteSvg.js";
 
 export class AyudaView {
     /** @type {Dialogo} */
     #dialogo;
 
     /**
-     * Rellena la leyenda con las formas reales de los enemigos.
+     * Rellena la leyenda con los sprites reales del juego (`data-leyenda-sprite`).
      * @param {HTMLDialogElement} elemento - Diálogo `[data-ayuda]`.
      */
     constructor(elemento) {
         this.#dialogo = new Dialogo(elemento);
-        elemento.querySelectorAll("[data-leyenda-forma]").forEach((hueco) => {
-            hueco.appendChild(crearFormaSvg(Number(hueco.dataset.leyendaForma)));
+        elemento.querySelectorAll("[data-leyenda-sprite]").forEach((hueco) => {
+            hueco.appendChild(crearSpriteSvg(hueco.dataset.leyendaSprite));
         });
     }
 

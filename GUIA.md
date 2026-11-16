@@ -17,14 +17,14 @@ JuegoModel emite eventos   →  AppController los recibe →  actualiza vistas y
 
 | Fichero | Qué hace | Por qué así |
 |---|---|---|
-| `Mundo.js` | Dimensiones lógicas (480 × 640) y `PASO_FIJO` | El juego es igual en cualquier pantalla; la vista escala |
+| `Mundo.js` | `calcularMundo(proporcion)` y `PASO_FIJO` | El mundo se adapta a la proporción del canvas para ocupar toda la pantalla |
 | `Entidad.js` | Posición, caja y `solapaCon` (colisión AABB) | Base común de todo lo que colisiona |
 | `Bala.js` | Proyectil vertical de la nave o de un enemigo | Movimiento rectilíneo uniforme |
 | `Nave.js` | Movimiento, cadencia, vidas, invulnerabilidad | Evita perder dos vidas seguidas |
 | `Enemigo.js` | Invasor de 3 tipos con puntos distintos | Forma y color distintos por tipo |
 | `Nodriza.js` | Bonus que cruza arriba | Riesgo/recompensa |
 | `Formacion.js` | Movimiento de la formación, bajada al tocar borde, aceleración | Aísla «cómo se mueven los enemigos» |
-| `Configuracion.js` | Ajustes inmutables y validados | El estado de ajustes cambia en un solo punto |
+| `Configuracion.js` | Ajustes inmutables y validados (dificultad, controles, tema, contraste, sonido) | El estado de ajustes cambia en un solo punto |
 | `JuegoModel.js` | Estados, bucle de simulación, colisiones, puntos, oleadas, eventos | Núcleo del juego; aleatoriedad inyectable |
 
 **Eventos del modelo** (patrón observador): `cambio`, `disparo`, `destruccion`, `impacto`, `oleada`, `fin`.
@@ -35,19 +35,23 @@ JuegoModel emite eventos   →  AppController los recibe →  actualiza vistas y
 
 | Fichero | Responsabilidad |
 |---|---|
-| `LienzoView.js` | Todo el dibujo con Canvas API. Colores leídos del CSS. HiDPI. Estrellas (parallax) y partículas |
-| `CabeceraView.js` | Marcadores y botones de partida (se habilitan según el estado) |
-| `AvisosView.js` | Cortina «Listo/Pausa» sobre el canvas y región `aria-live` |
-| `AjustesView.js` | Diálogo de ajustes; avisa al controlador |
-| `AyudaView.js` | Diálogo de ayuda con leyenda de enemigos |
+| `LienzoView.js` | Todo el dibujo con Canvas API a pantalla completa. Sprites pre-renderizados y escalados sin suavizado. Colores leídos del CSS. HiDPI. Estrellas (parallax) y partículas |
+| `sprites.js` | Bitmaps de todos los sprites (una sola definición para canvas e interfaz) |
+| `spriteSvg.js` | Convierte un sprite en SVG para la leyenda de la ayuda y los corazones |
+| `CabeceraView.js` | Marcadores (corazones, puntos, oleada) y botones de partida (se habilitan según el estado) |
+| `AvisosView.js` | Pantalla de inicio/pausa con botón sobre el canvas y región `aria-live` |
+| `AjustesView.js` | Diálogo de ajustes con deslizador e interruptores genéricos; avisa al controlador |
+| `AyudaView.js` | Diálogo de ayuda con leyenda de enemigos (sprites reales) |
 | `FinView.js` | Diálogo de resultados |
 | `EntradaView.js` | Teclado (por `event.code`), botones táctiles y pérdida de foco |
-| `PaginaView.js` | Clases de paleta y alto contraste en la raíz |
+| `PaginaView.js` | Clases de tema (oscuro/claro) y alto contraste en la raíz |
 | `AudioView.js` | Efectos con Web Audio, silenciado por defecto |
 | `Dialogo.js` | Envoltorio de `<dialog>` nativo (abrir, cerrar, fondo) |
-| `formaEnemigo.js` | SVG de cada tipo de enemigo, coloreado por CSS |
+**Juego a pantalla completa.** El canvas rellena todo el espacio bajo la cabecera, sin marco. Como la pantalla puede ser vertical, cuadrada o muy ancha, el *tamaño lógico del mundo* no es fijo: `LienzoView` mide el canvas y avisa (`alRedimensionar`) con su proporción; el controlador se la pasa a `JuegoModel.redimensionar`, que usa `calcularMundo` (alto fijo de 640 en apaisado, ancho mínimo de 360 en vertical). La nave se recoloca, la formación se ajusta y, en pantallas anchas, caben más columnas de enemigos (entre 4 y 12, ocupando como máximo el 70 % del ancho para que tengan recorrido lateral).
 
-**Cómo el canvas usa los colores del CSS.** Una propiedad personalizada no se puede pasar al canvas tal cual. `LienzoView` crea un `<span>` oculto cuyo `color` es `var(--sonda)`; para cada token pone `--sonda: var(--color-X)` y lee `getComputedStyle(...).color`, que devuelve un `rgb()` ya resuelto. Así la paleta se define **solo** en `variables.css`.
+**Sprites clásicos.** Cada sprite es un bitmap de texto (`sprites.js`): `X` es un píxel. Se pre-renderiza a un lienzo de 1 píxel por celda y se escala con `imageSmoothingEnabled = false`, lo que da píxeles nítidos y evita costuras. El tamaño de cada sprite coincide con su caja de colisión (p. ej. enemigo 11×8 celdas × 3 = 33×24). Los enemigos tienen dos fotogramas que alternan (animación clásica).
+
+**Cómo el canvas usa los colores del CSS.** Una propiedad personalizada no se puede pasar al canvas tal cual. `LienzoView` crea un `<span>` oculto cuyo `color` es `var(--sonda)`; para cada token pone `--sonda: var(--color-X)` y lee `getComputedStyle(...).color`, que devuelve un `rgb()` ya resuelto. Así los colores se definen **solo** en `variables.css`, y el canvas cambia con el tema.
 
 **Por qué las teclas solo actúan con el foco en el canvas o el `body`.** Si el foco está en un botón y se pulsa Espacio, el navegador lo «pulsa». Limitando las teclas de juego al canvas, Espacio conserva su función normal en los botones (accesibilidad por teclado). `Comenzar` y `Reanudar` devuelven el foco al canvas.
 
@@ -68,7 +72,7 @@ Decisión de usabilidad: abrir ayuda o ajustes **pausa** la partida (el diálogo
 | `components.css` | Bloques BEM con anidamiento nativo |
 
 ### Estrategia cromática
-Interfaz **monocromática** (un tono, variando saturación y luminosidad) sobre tema oscuro; enemigos **triádicos** (+0°, +120°, +240°): 120° es la máxima separación posible entre tres colores. Tres paletas = tres tonos base. Colores semánticos fijos (peligro, bonus, foco) que no cambian con la paleta.
+Interfaz **monocromática** (un tono, variando saturación y luminosidad) con dos temas, oscuro y claro, que comparten tono y relaciones y solo cambian las luminosidades; enemigos **triádicos** fijos (+0°, +120°, +240° → cian, magenta y lima): 120° es la máxima separación posible entre tres colores. Se eliminó la selección de paleta: añadía una decisión que no aportaba nada al jugador. Colores semánticos (peligro, bonus, vida, suelo) con tono fijo; solo cambia su luminosidad según el tema. Todos los pares texto/fondo y gráfico/fondo se midieron en los cuatro modos (texto ≥ 4,5:1, gráficos ≥ 3:1).
 
 ### Estrategia tipográfica
 **Dos fuentes contrastadas:** monoespaciada para título y cifras (estética arcade; dígitos de ancho fijo que no «bailan») y sans del sistema para texto corrido.

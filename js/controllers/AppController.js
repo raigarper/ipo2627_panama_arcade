@@ -81,8 +81,20 @@ export class AppController {
      */
     iniciar() {
         this.#aplicarConfiguracion();
+        this.#lienzoView.medir();
         this.#alCambiar();
         requestAnimationFrame(this.#bucle);
+    }
+
+    /**
+     * Adapta el mundo del modelo a la proporción del canvas. Lo llama la vista
+     * del lienzo cada vez que cambia su tamaño (girar el móvil, redimensionar
+     * la ventana), de modo que el juego ocupa siempre toda la pantalla.
+     * @param {number} proporcion - Ancho dividido por alto del canvas, en píxeles.
+     * @returns {void}
+     */
+    redimensionar(proporcion) {
+        this.#modelo.redimensionar(proporcion);
     }
 
     /**
@@ -202,12 +214,12 @@ export class AppController {
     }
 
     /**
-     * Cambia la paleta cromática de los enemigos (efecto inmediato).
-     * @param {string} paleta - Elemento de PALETAS.
+     * Cambia el tema de color de la interfaz (efecto inmediato).
+     * @param {string} tema - Elemento de TEMAS ("oscuro" o "claro").
      * @returns {void}
      */
-    cambiarPaleta(paleta) {
-        this.#configuracion = this.#configuracion.conPaleta(paleta);
+    cambiarTema(tema) {
+        this.#configuracion = this.#configuracion.conTema(tema);
         this.#aplicarConfiguracion();
     }
 
@@ -261,8 +273,8 @@ export class AppController {
     };
 
     /**
-     * Refleja en todas las vistas la configuración actual (paleta, contraste,
-     * controles, sonido y marcas de los ajustes).
+     * Refleja en todas las vistas la configuración actual (tema, contraste,
+     * controles, sonido y estado de los ajustes).
      * @returns {void}
      */
     #aplicarConfiguracion() {
@@ -310,8 +322,8 @@ export class AppController {
      * @returns {void}
      */
     #alCambiar() {
-        const { puntos, vidas, oleada, estado } = this.#modelo;
-        this.#cabeceraView.actualizarMarcadores({ puntos, vidas, oleada });
+        const { puntos, vidas, oleada, estado, vidasIniciales } = this.#modelo;
+        this.#cabeceraView.actualizarMarcadores({ puntos, vidas, vidasMax: vidasIniciales, oleada });
         this.#cabeceraView.actualizarEstado(estado);
         this.#avisosView.mostrarEstado(estado);
         this.#lienzoView.describir({ puntos, vidas, oleada, estado });

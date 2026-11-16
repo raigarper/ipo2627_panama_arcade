@@ -40,7 +40,9 @@ function arrancar() {
     let controlador;
 
     const lienzo = document.querySelector("[data-lienzo]");
-    const lienzoView = new LienzoView(lienzo);
+    const lienzoView = new LienzoView(lienzo, {
+        alRedimensionar: (proporcion) => controlador.redimensionar(proporcion),
+    });
 
     const cabeceraView = new CabeceraView(document.querySelector("[data-cabecera]"), {
         alComenzar: () => controlador.comenzar(),
@@ -54,6 +56,7 @@ function arrancar() {
     const avisosView = new AvisosView(
         document.querySelector("[data-cortina]"),
         document.querySelector("[data-anuncios]"),
+        { alConfirmar: () => controlador.confirmar() },
     );
 
     const ayudaView = new AyudaView(document.querySelector("[data-ayuda]"));
@@ -61,7 +64,7 @@ function arrancar() {
     const ajustesView = new AjustesView(document.querySelector("[data-ajustes]"), {
         alCambiarDificultad: (valor) => controlador.cambiarDificultad(valor),
         alCambiarControles: (valor) => controlador.cambiarControles(valor),
-        alCambiarPaleta: (valor) => controlador.cambiarPaleta(valor),
+        alCambiarTema: (valor) => controlador.cambiarTema(valor),
         alCambiarAltoContraste: (activo) => controlador.cambiarAltoContraste(activo),
         alCambiarSonido: (activo) => controlador.cambiarSonido(activo),
     });

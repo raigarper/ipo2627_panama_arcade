@@ -1,7 +1,7 @@
 /**
  * @file Nodriza.js
  * @capa Modelo
- * @resumen Nave nodriza bonus: cruza la parte superior del mundo y da muchos puntos si se destruye.
+ * @resumen Platillo nodriza bonus: cruza la parte superior del mundo y da muchos puntos si se destruye.
  * @depende Entidad
  * @usadoPor JuegoModel, LienzoView (solo lectura)
  */
@@ -12,6 +12,11 @@ import { Entidad } from "./Entidad.js";
 export const PUNTOS_NODRIZA = 100;
 
 export class Nodriza extends Entidad {
+    /** Anchura del platillo: 16 celdas de sprite × 3 unidades. */
+    static ANCHO = 48;
+    /** Altura del platillo: 7 celdas de sprite × 3 unidades. */
+    static ALTO = 21;
+
     /** @type {number} Velocidad horizontal en unidades/s (signo = sentido). */
     velocidadX;
 
@@ -20,7 +25,7 @@ export class Nodriza extends Entidad {
      * @param {number} velocidadX - Velocidad horizontal con signo.
      */
     constructor(x, velocidadX) {
-        super(x, 28, 44, 18);
+        super(x, 12, Nodriza.ANCHO, Nodriza.ALTO);
         this.velocidadX = velocidadX;
     }
 

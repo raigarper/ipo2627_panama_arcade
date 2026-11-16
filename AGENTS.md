@@ -115,7 +115,7 @@ ipo2627_panama_arcade/
     ├── app.js
     ├── models/       Mundo, Entidad, Bala, Nave, Enemigo, Nodriza, Formacion, Configuracion, JuegoModel
     ├── views/        LienzoView, CabeceraView, AvisosView, AjustesView, AyudaView, FinView,
-    │                 EntradaView, PaginaView, AudioView, Dialogo, formaEnemigo
+    │                 EntradaView, PaginaView, AudioView, Dialogo, sprites, spriteSvg
     └── controllers/  AppController
 ```
 
@@ -125,13 +125,15 @@ Orden de CSS en `style.css`: `reset` → `variables` → `layout` → `component
 
 ## Reglas del dominio (viven en el modelo)
 
-- Mundo lógico fijo **480 × 640**; la vista lo escala al canvas. Paso de simulación fijo **1/60 s** (`PASO_FIJO`).
+- **El mundo ocupa toda la pantalla y su tamaño lógico NO es fijo**: `calcularMundo(proporcion)` (`Mundo.js`) da alto 640 en apaisado y ancho 360 en vertical. `JuegoModel.redimensionar` lo aplica y recoloca nave y formación. Nunca hardcodear 480/640: leer `modelo.ancho` y `modelo.alto`.
+- Paso de simulación fijo **1/60 s** (`PASO_FIJO`).
 - Estados: `inicial → jugando ⇄ pausa → terminado`. Solo `iniciar()` sale de `inicial` o `terminado`.
 - Nave: movimiento horizontal, **máx. 3 balas** propias en pantalla, invulnerabilidad 1,6 s tras un impacto.
-- Enemigos: 3 tipos (círculo 10, triángulo 20, rombo 30 puntos), formación de 8 columnas que baja una fila al tocar un borde y acelera al quedar pocos. Solo el enemigo más bajo de cada columna dispara.
+- Enemigos: 3 tipos (pulpo 10, cangrejo 20, calamar 30 puntos). Formación de 4 a 12 columnas según el ancho del mundo (como máximo el 70 % del ancho, para que tenga recorrido lateral), que baja una fila al tocar un borde y acelera al quedar pocos. Solo el enemigo más bajo de cada columna dispara.
+- Cada sprite mide celdas × `CELDA` (3) unidades y **debe coincidir con la caja de colisión** de su entidad (enemigo 33×24, nave 39×24, nodriza 48×21).
 - Nodriza bonus: cruza arriba cada 15–25 s, 100 puntos.
 - La partida termina por: sin vidas, invasión (un enemigo llega a la altura de la nave) o abandono.
-- La dificultad (vidas, velocidad, frecuencia de disparo) **no cambia una partida en curso**: aplica a la siguiente. Controles, paleta, contraste y sonido aplican al instante.
+- La dificultad (vidas, velocidad, frecuencia de disparo) **no cambia una partida en curso**: aplica a la siguiente. Controles, tema, contraste y sonido aplican al instante.
 - La aleatoriedad se **inyecta** en `JuegoModel` para poder probarlo de forma determinista.
 
 ---
@@ -139,8 +141,9 @@ Orden de CSS en `style.css`: `reset` → `variables` → `layout` → `component
 ## Canvas y bucle principal
 
 - Bucle con **paso fijo y acumulador** (`AppController.#bucle`): actualizar N veces, pintar una vez. Nunca multiplicar la física por un `dt` variable de renderizado.
-- Resolución interna del canvas = tamaño en pantalla × `devicePixelRatio` (`LienzoView.#ajustarResolucion`).
-- Los **colores del canvas salen del CSS** (`releerColores`); no se escribe ningún color en JS. Tras cambiar paleta o contraste hay que llamar a `releerColores()`.
+- El canvas **rellena todo su contenedor, sin marco**. Resolución interna = tamaño en pantalla × `devicePixelRatio` (`LienzoView.medir`), que además avisa de la proporción para que el modelo adapte el mundo.
+- Los **sprites** son bitmaps de texto en `sprites.js` (una sola definición para canvas e interfaz). Se pre-renderizan a lienzos de 1 píxel por celda y se escalan con `imageSmoothingEnabled = false`. La interfaz los usa vía `spriteSvg.js`.
+- Los **colores del canvas salen del CSS** (`releerColores`); no se escribe ningún color en JS. Tras cambiar tema o contraste hay que llamar a `releerColores()` (regenera también los sprites).
 - Partículas y parallax son efectos de vista y se desactivan con `prefers-reduced-motion`.
 - Pausa automática al perder foco / ocultar pestaña / abrir un diálogo.
 
@@ -148,7 +151,7 @@ Orden de CSS en `style.css`: `reset` → `variables` → `layout` → `component
 
 ## Selección por `data-*`
 
-El JS **nunca** busca por clase de estilo ni por `id`. Anclajes: `data-pagina`, `data-lienzo`, `data-cabecera`, `data-cortina`, `data-anuncios`, `data-mandos`, `data-tactil`, `data-ayuda`, `data-ajustes`, `data-fin`, `data-accion`, `data-control` + `data-valor`, `data-marcador-*`, `data-cerrar`. Nombres en español y kebab-case, leídos con `dataset`. Los `id` del HTML existen solo para relaciones ARIA y el enlace de salto.
+El JS **nunca** busca por clase de estilo ni por `id`. Anclajes: `data-pagina`, `data-lienzo`, `data-cabecera`, `data-cortina`, `data-anuncios`, `data-mandos`, `data-tactil`, `data-ayuda`, `data-ajustes`, `data-fin`, `data-accion`, `data-control` (con `data-valores` en el deslizador o `data-valor-activo`/`data-valor-inactivo` en los interruptores), `data-marcador-*`, `data-cortina-*`, `data-deslizador`, `data-marca`, `data-leyenda-sprite`, `data-cerrar`. Nombres en español y kebab-case, leídos con `dataset`. Los `id` del HTML existen solo para relaciones ARIA y el enlace de salto.
 
 ---
 
@@ -156,21 +159,27 @@ El JS **nunca** busca por clase de estilo ni por `id`. Anclajes: `data-pagina`, 
 
 | Nodo | Sistema |
 |---|---|
-| Estructura de página | Grid |
-| Cabecera, grupos de botones, zona de juego, marcadores | Flexbox |
+| Estructura de página (cabecera + juego) | Grid de 2 filas (`auto` + `minmax(0,1fr)`) |
+| Cabecera (cambia de 3 columnas a 2 o 3 filas) | Grid con áreas con nombre |
+| Escenario que contiene el canvas | Grid de una celda |
+| Grupos de botones, marcadores, zona de juego, pista de teclas | Flexbox |
 | Mandos táctiles (3 columnas, la central más ancha) | Grid |
 | Texto de ayuda | Flujo normal |
 
-`position` solo para lo que **flota sin desplazar nada**: la cortina de mensajes sobre el canvas (`relative` + `absolute` + `inset`) y el enlace de salto. Nunca para colocar el canvas, botones ni marcadores.
+`position` solo para lo que **flota sin desplazar nada**: la cortina de inicio/pausa sobre el canvas (`relative` + `absolute` + `inset`), el enlace de salto y el texto solo para lectores de pantalla. Nunca para colocar el canvas, botones ni marcadores.
+
+**Responsive**: la página mide `100dvh` y hace scroll solo si no cabe (nunca recorta). Puntos de corte: `64em` (cabecera en 2 filas), `40em` (3 filas) y `height <= 30em` (móvil apaisado: una sola fila compacta; los tamaños se reducen redefiniendo variables, no reescribiendo reglas).
 
 ---
 
 ## Estrategias de diseño (se fijan en `variables.css`)
 
-- **Cromática**: interfaz **monocromática** (un `--tono-interfaz`); enemigos **triádicos** (+0°, +120°, +240° sobre `--tono-enemigos`); colores semánticos fijos (peligro, bonus, foco).
+- **Cromática**: interfaz **monocromática** (un `--tono-interfaz`) con **dos temas** (oscuro por defecto y claro) que solo cambian luminosidades; enemigos **triádicos** fijos (+0°, +120°, +240° sobre `--tono-enemigos`; no hay selección de paleta); colores semánticos de tono fijo (peligro, bonus, vida, suelo, foco). Los temas se activan con clases en `.pagina` y recalculan los derivados porque estos se declaran en `:root, .pagina`.
+- **Jerarquía del marcador**: los puntos son lo más grande y luminoso de la interfaz; las vidas son corazones (forma + color, y vacíos al perderse); la oleada es secundaria.
+- **Ajustes**: deslizador para la dificultad (3 posiciones) e interruptores (`role="switch"`) para controles, tema, alto contraste y sonido.
 - **Tipográfica**: **dos fuentes contrastadas** — monoespaciada para título y cifras, sans del sistema para texto.
 - **Espacial**: `rem` y escala `xs < s < m < l < xl`; Gestalt (proximidad, semejanza, figura/fondo, región común).
-- **Accesibilidad**: contraste de texto ≥ 4,5:1 y de bordes ≥ 3:1 (medido); foco visible; tipo de enemigo codificado por **forma y color**; `<dialog>` nativo; `aria-live` para eventos; canvas con `aria-label` dinámico; modo alto contraste; `prefers-reduced-motion`; controles táctiles.
+- **Accesibilidad**: contraste de texto ≥ 4,5:1 y de gráficos/bordes ≥ 3:1, medido en los cuatro modos (oscuro, claro y sus altos contrastes); foco visible; tipo de enemigo codificado por **silueta y color**; `<dialog>` nativo; `aria-live` para eventos; canvas con `aria-label` dinámico; modo alto contraste; `prefers-reduced-motion`; controles táctiles.
 
 ---
 
@@ -190,9 +199,9 @@ Y en el navegador, sirviendo por HTTP (`python -m http.server 8000`), nunca con 
 1. Carga sin errores en consola.
 2. Comenzar, pausar, reanudar y finalizar funcionan; los botones se habilitan según el estado.
 3. Mover, disparar, destruir enemigos, perder vidas y pasar de oleada.
-4. Abrir ayuda y ajustes (la partida se pausa); cambiar paleta, controles, contraste y sonido.
+4. Abrir ayuda y ajustes (la partida se pausa); mover el deslizador y accionar los cuatro interruptores (tema claro y oscuro incluidos).
 5. Jugar entero con teclado; probar controles táctiles en emulación móvil.
-6. Estrechar la ventana: sin scroll horizontal ni recortes; el canvas conserva la proporción 3:4.
+6. Cambiar el tamaño de la ventana y girar el móvil (también en plena partida): el canvas rellena todo el espacio, sin scroll horizontal ni recortes, y nada queda fuera del mundo.
 7. Activar `prefers-reduced-motion`: sin partículas ni parallax.
 8. Cambiar de pestaña: la partida se pausa.
 

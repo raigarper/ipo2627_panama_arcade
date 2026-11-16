@@ -1,7 +1,7 @@
 /**
  * @file components.css
  * @capa Estilos (4/4)
- * @resumen Bloques BEM de la interfaz: cabecera, marcadores, botones, escenario, diálogos, opciones y leyenda.
+ * @resumen Bloques BEM de la interfaz: cabecera, marcadores, botones, cortina, diálogos, interruptores, deslizador, leyenda y sprites.
  * @depende variables.css, layout.css
  * @usadoPor style.css
  *
@@ -9,16 +9,18 @@
  *   - BEM: `bloque__elemento--modificador`. Los elementos se anidan DENTRO de la
  *     llave de su bloque (anidamiento nativo de CSS); los modificadores van con
  *     `&.bloque--modificador` porque son clases de la misma etiqueta.
- *   - Los estados los pone el JS como clases modificadoras (`--activa`, `--oculta`,
- *     `--silenciado`), nunca escribiendo estilos en línea.
+ *   - Los estados los pone el JS como clases modificadoras (`--oculta`,
+ *     `--silenciado`, `--vacio`, `--sube`); los de formulario usan pseudoclases
+ *     nativas (`:checked`, `:disabled`).
  *   - Sin `!important`, sin selectores de id y sin colores literales: todo sale
  *     de `variables.css`.
  *
  * GESTALT APLICADO
  *   - Proximidad: botones de un mismo grupo juntos (--espacio-xs); grupos separados (--espacio-m).
  *   - Semejanza: todos los controles comparten forma, radio y tipografía.
- *   - Figura y fondo: el canvas (figura) destaca sobre la interfaz oscura (fondo).
- *   - Región común: el escenario tiene borde y esquinas propios que lo delimitan.
+ *   - Figura y fondo: el juego ocupa toda la pantalla y es la figura; la cabecera es servicio.
+ *   - Jerarquía visual: los PUNTOS son lo más grande de la interfaz (tamaño y brillo);
+ *     vidas y oleada son secundarios.
  */
 
 /* ============================== Cabecera ============================== */
@@ -33,28 +35,96 @@
     font-family: var(--fuente-titulo);
     font-size: var(--texto-titulo);
     font-weight: var(--peso-titulo);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
     line-height: 1.15;
 }
 
-/* ============================== Marcador ============================== */
-.marcador {
+/* ============================== Marcadores: puntos, vidas y oleada ============================== */
+.puntos {
     display: flex;
     flex-direction: column;
     align-items: center;
+    min-inline-size: var(--ancho-puntos);
 
-    .marcador__etiqueta {
+    .puntos__etiqueta {
         font-size: var(--texto-eyebrow);
         letter-spacing: var(--tracking-eyebrow);
         text-transform: uppercase;
         color: var(--color-texto-suave);
     }
 
-    .marcador__valor {
+    /* El elemento más grande y luminoso de la interfaz: la puntuación manda. */
+    .puntos__valor {
+        font-family: var(--fuente-titulo);
+        font-size: var(--texto-puntos);
+        font-weight: var(--peso-titulo);
+        font-variant-numeric: tabular-nums;
+        line-height: 1.05;
+        color: var(--color-acento);
+        text-shadow: var(--brillo-puntos);
+    }
+
+    .puntos__valor.puntos__valor--sube {
+        animation: pulso-puntos 300ms ease-out;
+    }
+}
+
+.oleada {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .oleada__etiqueta {
+        font-size: var(--texto-eyebrow);
+        letter-spacing: var(--tracking-eyebrow);
+        text-transform: uppercase;
+        color: var(--color-texto-suave);
+    }
+
+    .oleada__valor {
         font-family: var(--fuente-titulo);
         font-size: var(--texto-marcador);
         font-weight: var(--peso-realce);
         font-variant-numeric: tabular-nums;
         line-height: 1.2;
+    }
+}
+
+/* Vidas: un corazón por vida inicial; los perdidos se ven vacíos (forma y color, no solo color). */
+.vidas {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-xs);
+
+    .vidas__corazon {
+        inline-size: 1.6rem;
+        block-size: 1.4rem;
+    }
+
+    .vidas__corazon.vidas__corazon--vacio {
+        opacity: 0.35;
+    }
+
+    .vidas__corazon.vidas__corazon--vacio .sprite__cuerpo--corazon {
+        fill: none;
+        stroke: var(--color-texto-suave);
+        stroke-width: 0.5;
+    }
+}
+
+/* Latido breve del número al ganar puntos (desaparece con prefers-reduced-motion, ver reset.css). */
+@keyframes pulso-puntos {
+    0% {
+        transform: scale(1);
+    }
+
+    40% {
+        transform: scale(1.18);
+    }
+
+    100% {
+        transform: scale(1);
     }
 }
 
@@ -64,7 +134,7 @@
     align-items: center;
     justify-content: center;
     gap: var(--espacio-xs);
-    min-block-size: 2.5rem;
+    min-block-size: var(--alto-control);
     padding-inline: var(--espacio-m);
     background: var(--color-elevado);
     color: var(--color-texto);
@@ -96,6 +166,12 @@
         color: var(--color-peligro-texto);
         border-color: var(--color-peligro-texto);
     }
+
+    &.boton--grande {
+        min-block-size: 3.25rem;
+        padding-inline: var(--espacio-xl);
+        font-size: var(--texto-base);
+    }
 }
 
 /* ============================== Botón de icono ============================== */
@@ -103,8 +179,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    inline-size: 2.5rem;
-    block-size: 2.5rem;
+    inline-size: var(--alto-control);
+    block-size: var(--alto-control);
     background: var(--color-elevado);
     color: var(--color-texto);
     border: var(--borde-fino) solid var(--color-borde);
@@ -143,34 +219,49 @@
     block-size: 1.15rem;
 }
 
-/* ============================== Escenario ============================== */
-.escenario {
-    background: var(--color-fondo);
-    border: var(--borde-fino) solid var(--color-borde);
-    border-radius: var(--radio-lienzo);
-    overflow: hidden;
+/* ============================== Canvas ==============================
+   El foco del canvas se ve como un aro fino DENTRO del borde (offset negativo), en color de
+   acento: sigue siendo visible para quien usa teclado, pero no rodea el juego con un marco blanco. */
+.escenario__lienzo:focus-visible {
+    outline: 0.15rem solid var(--color-acento);
+    outline-offset: -0.15rem;
+}
 
-    .escenario__cortina {
-        background: var(--color-respaldo);
-    }
+/* ============================== Cortina de inicio y pausa ============================== */
+.escenario__cortina {
+    background: var(--color-respaldo);
 
     .escenario__titulo {
         font-family: var(--fuente-titulo);
-        font-size: var(--texto-titulo);
+        font-size: var(--texto-titulo-cortina);
         font-weight: var(--peso-titulo);
+        line-height: 1.1;
     }
 
     .escenario__texto {
+        max-inline-size: 28rem;
+        color: var(--color-texto-suave);
+    }
+
+    .escenario__teclas {
+        margin-block-start: var(--espacio-s);
         font-size: var(--texto-pequeno);
         color: var(--color-texto-suave);
     }
 }
 
-.zona-juego__pista {
-    max-inline-size: 34rem;
-    text-align: center;
+/* Tecla dibujada como un botón de teclado (<kbd>). */
+.tecla {
+    display: inline-block;
+    min-inline-size: 1.75rem;
+    padding: 0.1rem var(--espacio-xs);
+    background: var(--color-elevado);
+    color: var(--color-texto);
+    border: var(--borde-fino) solid var(--color-borde);
+    border-radius: 0.4rem;
+    font-family: var(--fuente-titulo);
     font-size: var(--texto-pequeno);
-    color: var(--color-texto-suave);
+    text-align: center;
 }
 
 /* ============================== Mando táctil ============================== */
@@ -257,14 +348,18 @@
         padding-inline-start: var(--espacio-m);
     }
 
+    /* Un grupo de ajustes: título pequeño y controles, separados del siguiente grupo. */
     .modal__grupo {
         display: flex;
         flex-direction: column;
         gap: var(--espacio-xs);
+        padding-block-end: var(--espacio-s);
+        border-block-end: var(--borde-fino) solid var(--color-borde);
     }
 
     .modal__etiqueta {
         font-size: var(--texto-eyebrow);
+        font-weight: var(--peso-normal);
         letter-spacing: var(--tracking-eyebrow);
         text-transform: uppercase;
         color: var(--color-texto-suave);
@@ -286,82 +381,160 @@
     }
 }
 
-/* ============================== Opciones segmentadas ============================== */
-.opciones {
+/* ============================== Interruptor (switch) ==============================
+   Un `<input type="checkbox" role="switch">` con apariencia propia. El estado lo da
+   la pseudoclase nativa :checked, así funciona con teclado (Espacio) y lectores de pantalla. */
+.interruptor {
     display: flex;
-    flex-wrap: wrap;
-    gap: var(--espacio-xs);
-}
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--espacio-m);
+    padding-block: var(--espacio-xs);
+    cursor: pointer;
 
-.opcion {
-    min-block-size: 2.5rem;
-    padding-inline: var(--espacio-m);
-    background: var(--color-elevado);
-    color: var(--color-texto);
-    border: var(--borde-fino) solid var(--color-borde);
-    border-radius: var(--radio-boton);
-    font-size: var(--texto-pequeno);
-    font-weight: var(--peso-realce);
-
-    &:hover {
-        background: var(--color-sobrevuelo);
+    .interruptor__texto {
+        display: flex;
+        flex-direction: column;
     }
 
-    /* El estado activo se distingue por color Y por un borde más grueso (no solo color). */
-    &.opcion--activa {
-        background: var(--color-acento);
-        color: var(--color-acento-texto);
-        border-color: var(--color-texto);
-        border-width: 0.15rem;
-    }
-}
-
-/* ============================== Muestras de paleta ============================== */
-.muestras {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--espacio-s);
-}
-
-.muestra {
-    display: flex;
-    gap: var(--espacio-xs);
-    padding: var(--espacio-xs) var(--espacio-s);
-    background: var(--color-elevado);
-    border: var(--borde-fino) solid var(--color-borde);
-    border-radius: var(--radio-boton);
-
-    &:hover {
-        background: var(--color-sobrevuelo);
+    .interruptor__titulo {
+        font-weight: var(--peso-realce);
     }
 
-    &.opcion--activa {
+    .interruptor__ayuda {
+        font-size: var(--texto-pequeno);
+        color: var(--color-texto-suave);
+    }
+
+    .interruptor__control {
+        appearance: none;
+        flex: none;
+        display: inline-flex;
+        align-items: center;
+        inline-size: 3rem;
+        block-size: 1.75rem;
+        padding: 0.2rem;
+        margin: 0;
         background: var(--color-elevado);
-        border-color: var(--color-texto);
-        border-width: 0.15rem;
-    }
+        border: var(--borde-fino) solid var(--color-borde);
+        border-radius: var(--radio-pildora);
+        cursor: pointer;
+        transition: background-color 150ms;
 
-    .muestra__forma {
-        inline-size: 1.4rem;
-        block-size: 1.4rem;
+        /* El "pulgar" que se desliza. */
+        &::before {
+            content: "";
+            inline-size: 1.25rem;
+            block-size: 1.25rem;
+            background: var(--color-texto);
+            border-radius: 50%;
+            transition: transform 150ms;
+        }
+
+        &:checked {
+            background: var(--color-acento);
+            border-color: transparent;
+        }
+
+        &:checked::before {
+            transform: translateX(1.25rem);
+            background: var(--color-acento-texto);
+        }
     }
 }
 
-/* ============================== Formas de enemigo (SVG) ============================== */
-.forma {
+/* ============================== Deslizador (dificultad) ==============================
+   Un `<input type="range">` nativo con apariencia propia. Los selectores de WebKit y
+   Firefox van en reglas separadas: un selector no reconocido invalida toda su regla. */
+.deslizador {
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-xs);
+    padding-block: var(--espacio-xs);
+
+    .deslizador__titulo {
+        font-weight: var(--peso-realce);
+    }
+
+    .deslizador__control {
+        appearance: none;
+        inline-size: 100%;
+        block-size: 1.75rem;
+        margin: 0;
+        background: transparent;
+        cursor: pointer;
+
+        &::-webkit-slider-runnable-track {
+            block-size: 0.5rem;
+            background: var(--color-elevado);
+            border: var(--borde-fino) solid var(--color-borde);
+            border-radius: var(--radio-pildora);
+        }
+
+        &::-webkit-slider-thumb {
+            appearance: none;
+            inline-size: 1.5rem;
+            block-size: 1.5rem;
+            margin-block-start: -0.6rem;
+            background: var(--color-acento);
+            border: 0.2rem solid var(--color-texto);
+            border-radius: 50%;
+        }
+
+        &::-moz-range-track {
+            block-size: 0.5rem;
+            background: var(--color-elevado);
+            border: var(--borde-fino) solid var(--color-borde);
+            border-radius: var(--radio-pildora);
+        }
+
+        &::-moz-range-thumb {
+            inline-size: 1.1rem;
+            block-size: 1.1rem;
+            background: var(--color-acento);
+            border: 0.2rem solid var(--color-texto);
+            border-radius: 50%;
+        }
+    }
+
+    /* Etiquetas bajo el deslizador: Flexbox con los tres textos repartidos. */
+    .deslizador__marcas {
+        display: flex;
+        justify-content: space-between;
+        font-size: var(--texto-pequeno);
+        color: var(--color-texto-suave);
+    }
+
+    /* La marca activa se distingue por peso y color (no solo color). */
+    .deslizador__marca.deslizador__marca--activa {
+        font-weight: var(--peso-titulo);
+        color: var(--color-texto);
+    }
+}
+
+/* ============================== Sprites SVG (leyenda y corazones) ============================== */
+.sprite {
     inline-size: 100%;
     block-size: 100%;
 
-    .forma__cuerpo.forma__cuerpo--tipo-0 {
+    .sprite__cuerpo.sprite__cuerpo--enemigo0 {
         fill: var(--color-enemigo-0);
     }
 
-    .forma__cuerpo.forma__cuerpo--tipo-1 {
+    .sprite__cuerpo.sprite__cuerpo--enemigo1 {
         fill: var(--color-enemigo-1);
     }
 
-    .forma__cuerpo.forma__cuerpo--tipo-2 {
+    .sprite__cuerpo.sprite__cuerpo--enemigo2 {
         fill: var(--color-enemigo-2);
+    }
+
+    .sprite__cuerpo.sprite__cuerpo--nodriza {
+        fill: var(--color-bonus);
+    }
+
+    .sprite__cuerpo.sprite__cuerpo--corazon {
+        fill: var(--color-vida);
     }
 }
 
@@ -369,7 +542,7 @@
 .leyenda {
     display: flex;
     flex-direction: column;
-    gap: var(--espacio-xs);
+    gap: var(--espacio-s);
     padding: 0;
     list-style: none;
 
@@ -380,16 +553,14 @@
         font-size: var(--texto-pequeno);
     }
 
-    .leyenda__forma {
+    .leyenda__sprite {
         flex: none;
-        inline-size: 1.6rem;
+        inline-size: 2.2rem;
         block-size: 1.6rem;
     }
 
-    .leyenda__forma.leyenda__forma--nodriza {
-        border-radius: 50%;
-        background: var(--color-bonus);
-        block-size: 0.9rem;
+    .leyenda__sprite.leyenda__sprite--ancho {
+        inline-size: 2.6rem;
     }
 }
 

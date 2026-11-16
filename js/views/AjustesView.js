@@ -1,33 +1,39 @@
 /**
  * @file AjustesView.js
  * @capa Vista
- * @resumen Diálogo de ajustes: dificultad, controles, paleta, alto contraste y sonido.
- * @depende Dialogo, formaEnemigo
+ * @resumen Diálogo de ajustes: deslizador de dificultad e interruptores de controles, tema, alto contraste y sonido.
+ * @depende Dialogo
  * @usadoPor app.js, AppController
  *
- * Esta vista NO valida ni aplica ajustes: lee el control pulsado
- * (`data-control` + `data-valor`) y avisa al controlador. Después el
- * controlador llama a `actualizar()` para marcar el valor realmente activo,
- * de modo que la interfaz nunca muestra algo desincronizado del modelo.
+ * Esta vista NO valida ni aplica ajustes: lee el control accionado y avisa al
+ * controlador con un valor de texto. Después el controlador llama a
+ * `actualizar()` para reflejar el valor realmente activo, de modo que la
+ * interfaz nunca muestra algo desincronizado del modelo.
+ *
+ * Cada control lleva `data-control` (qué ajuste es):
+ *  - Deslizador (`input[type=range]`): `data-valores="a b c"` lista, en orden, los
+ *    valores que representa cada posición.
+ *  - Interruptor (`input[type=checkbox][role=switch]`): `data-valor-activo` y
+ *    `data-valor-inactivo` son los valores que representan encendido y apagado.
+ * Así la vista es genérica y no conoce el significado de ningún ajuste.
  */
 
 import { Dialogo } from "./Dialogo.js";
-import { crearFormaSvg } from "./formaEnemigo.js";
 
 export class AjustesView {
     /** @type {Dialogo} */
     #dialogo;
-    /** @type {Record<string, HTMLElement[]>} Botones agrupados por `data-control`. */
-    #controles = {};
+    /** @type {HTMLInputElement[]} Todos los controles de ajuste del diálogo. */
+    #controles;
     #avisoDificultad;
 
     /**
-     * Localiza los controles por `data-*`, enlaza sus clics y pinta las muestras de paleta.
+     * Localiza los controles por `data-*` y enlaza sus eventos.
      * @param {HTMLDialogElement} elemento - Diálogo `[data-ajustes]`.
      * @param {{
      *   alCambiarDificultad: (valor:string) => void,
      *   alCambiarControles: (valor:string) => void,
-     *   alCambiarPaleta: (valor:string) => void,
+     *   alCambiarTema: (valor:string) => void,
      *   alCambiarAltoContraste: (activo:boolean) => void,
      *   alCambiarSonido: (activo:boolean) => void,
      * }} callbacks - Avisos al controlador.
@@ -35,39 +41,50 @@ export class AjustesView {
     constructor(elemento, callbacks) {
         this.#dialogo = new Dialogo(elemento);
         this.#avisoDificultad = elemento.querySelector("[data-aviso-dificultad]");
+        this.#controles = Array.from(elemento.querySelectorAll("[data-control]"));
 
         const acciones = {
             dificultad: (valor) => callbacks.alCambiarDificultad(valor),
             controles: (valor) => callbacks.alCambiarControles(valor),
-            paleta: (valor) => callbacks.alCambiarPaleta(valor),
+            tema: (valor) => callbacks.alCambiarTema(valor),
             "alto-contraste": (valor) => callbacks.alCambiarAltoContraste(valor === "true"),
             sonido: (valor) => callbacks.alCambiarSonido(valor === "true"),
         };
 
-        Object.entries(acciones).forEach(([nombre, accion]) => {
-            const botones = Array.from(elemento.querySelectorAll(`[data-control='${nombre}']`));
-            this.#controles[nombre] = botones;
-            botones.forEach((boton) => {
-                boton.addEventListener("click", () => accion(boton.dataset.valor));
-            });
-        });
-
-        elemento.querySelectorAll("[data-muestra-forma]").forEach((hueco) => {
-            hueco.appendChild(crearFormaSvg(Number(hueco.dataset.muestraForma)));
+        this.#controles.forEach((control) => {
+            const accion = acciones[control.dataset.control];
+            if (control.type === "range") {
+                control.addEventListener("input", () => accion(this.#valoresDe(control)[Number(control.value)]));
+            } else {
+                control.addEventListener("change", () => {
+                    accion(control.checked ? control.dataset.valorActivo : control.dataset.valorInactivo);
+                });
+            }
         });
     }
 
     /**
-     * Marca como activo el botón de cada grupo que coincide con la configuración.
+     * Refleja la configuración en los controles: posición del deslizador,
+     * estado de los interruptores y marca activa de la dificultad.
      * @param {import("../models/Configuracion.js").Configuracion} configuracion - Ajustes actuales.
      * @returns {void}
      */
     actualizar(configuracion) {
-        this.#marcarActivo("dificultad", configuracion.dificultad);
-        this.#marcarActivo("controles", configuracion.controles);
-        this.#marcarActivo("paleta", configuracion.paleta);
-        this.#marcarActivo("alto-contraste", String(configuracion.altoContraste));
-        this.#marcarActivo("sonido", String(configuracion.sonido));
+        const actuales = {
+            dificultad: configuracion.dificultad,
+            controles: configuracion.controles,
+            tema: configuracion.tema,
+            "alto-contraste": String(configuracion.altoContraste),
+            sonido: String(configuracion.sonido),
+        };
+        this.#controles.forEach((control) => {
+            const valor = actuales[control.dataset.control];
+            if (control.type === "range") {
+                this.#reflejarDeslizador(control, valor);
+            } else {
+                control.checked = control.dataset.valorActivo === valor;
+            }
+        });
     }
 
     /**
@@ -88,17 +105,31 @@ export class AjustesView {
     }
 
     /**
-     * Marca activo el botón cuyo `data-valor` coincide, y actualiza `aria-pressed`
-     * para que un lector de pantalla anuncie cuál está seleccionado.
-     * @param {string} control - Nombre del grupo (`data-control`).
-     * @param {string} valorActivo - Valor que debe quedar marcado.
+     * Lee la lista de valores que representa cada posición de un deslizador.
+     * @param {HTMLInputElement} control - Deslizador con `data-valores`.
+     * @returns {string[]} Valores en orden.
+     */
+    #valoresDe(control) {
+        return control.dataset.valores.split(" ");
+    }
+
+    /**
+     * Coloca el deslizador en la posición de un valor, resalta su marca y
+     * actualiza `aria-valuetext` para que un lector de pantalla diga "Normal"
+     * en vez de "1".
+     * @param {HTMLInputElement} control - Deslizador.
+     * @param {string} valor - Valor activo.
      * @returns {void}
      */
-    #marcarActivo(control, valorActivo) {
-        this.#controles[control].forEach((boton) => {
-            const activo = boton.dataset.valor === valorActivo;
-            boton.classList.toggle("opcion--activa", activo);
-            boton.setAttribute("aria-pressed", String(activo));
+    #reflejarDeslizador(control, valor) {
+        control.value = String(this.#valoresDe(control).indexOf(valor));
+        const marcas = Array.from(control.closest("[data-deslizador]").querySelectorAll("[data-marca]"));
+        marcas.forEach((marca) => {
+            const activa = marca.dataset.marca === valor;
+            marca.classList.toggle("deslizador__marca--activa", activa);
+            if (activa) {
+                control.setAttribute("aria-valuetext", marca.textContent);
+            }
         });
     }
 }

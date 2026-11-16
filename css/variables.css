@@ -1,20 +1,20 @@
 /**
  * @file variables.css
  * @capa Estilos (2/4)
- * @resumen ÚNICA fuente de colores, tipografía, espacios, radios y geometría. Define las tres estrategias de diseño.
+ * @resumen ÚNICA fuente de colores, tipografía, espacios, radios y geometría. Define las tres estrategias de diseño y los dos temas.
  * @depende Nada.
  * @usadoPor reset.css, layout.css, components.css, LienzoView (lee --color-* mediante una sonda)
  *
  * ESTRATEGIA CROMÁTICA
  *   - Interfaz: MONOCROMÁTICA. Un solo tono (--tono-interfaz) y todo lo demás se
- *     deriva variando saturación y luminosidad. Tema oscuro, propio de un arcade
- *     y que hace de "fondo" para que las figuras (enemigos) destaquen.
- *   - Enemigos: TRIÁDICA. Tres tonos separados 120° sobre --tono-enemigos. Es la
- *     separación máxima posible entre 3 colores, así los 3 tipos siempre se
- *     distinguen, sea cual sea la paleta elegida. Además cada tipo tiene una
- *     forma distinta: el color nunca es el único canal de información.
- *   - Colores semánticos fijos (peligro, bonus, foco): no dependen de la paleta,
- *     para que "peligro" se lea siempre igual.
+ *     deriva variando saturación y luminosidad. El tema oscuro y el claro usan
+ *     el MISMO tono y las mismas relaciones; solo cambian las luminosidades.
+ *   - Enemigos: TRIÁDICA y fija. Tres tonos separados 120° sobre --tono-enemigos
+ *     (cian, magenta y lima). Es la máxima separación posible entre 3 colores,
+ *     así los 3 tipos siempre se distinguen. Además cada tipo tiene una silueta
+ *     distinta: el color nunca es el único canal de información.
+ *   - Colores semánticos fijos (peligro, bonus, vida, suelo, foco): no dependen
+ *     del tema salvo en luminosidad, para que "peligro" se lea siempre igual.
  *
  * ESTRATEGIA TIPOGRÁFICA: DOS FUENTES CONTRASTADAS
  *   - Monoespaciada (--fuente-titulo) para título, marcadores y cifras: estética
@@ -27,32 +27,48 @@
  *     expresar proximidad (Gestalt): el hueco ENTRE grupos es mayor que DENTRO.
  *   - Excepción documentada: --borde-fino (1px) para bordes finos.
  *
- * MECÁNICA DE LOS TOKENS DERIVADOS
+ * MECÁNICA DE LOS TEMAS
  *   Las propiedades personalizadas se resuelven donde se DECLARAN. Por eso los
- *   colores derivados se declaran en `:root, .pagina, .muestra`: así, cuando
- *   `.pagina--paleta-X`, `.pagina--alto-contraste` o `.muestra--X` cambian una
- *   ENTRADA (un tono, una luminosidad), los derivados se recalculan en ese
- *   elemento. Cambiar de paleta es tocar solo estas variables: nunca JS ni HTML.
+ *   colores derivados se declaran en `:root, .pagina`: cuando `.pagina--tema-claro`
+ *   o `.pagina--alto-contraste` cambian una ENTRADA (una luminosidad), los
+ *   derivados se recalculan en ese elemento. Cambiar de tema es tocar solo
+ *   estas variables: nunca JS ni HTML.
  */
 
 :root {
-    /* ---------- ENTRADAS de la estrategia cromática ---------- */
+    /* ---------- ENTRADAS comunes: tonos y saturaciones ---------- */
     --tono-interfaz: 235;
     --saturacion-interfaz: 32%;
+    --tono-enemigos: 190;
+    --saturacion-enemigos: 80%;
+    --tono-peligro: 8;
+    --tono-bonus: 46;
+    --tono-vida: 350;
+    --tono-suelo: 140;
+
+    /* ---------- ENTRADAS del tema OSCURO (por defecto): luminosidades ---------- */
     --luminosidad-fondo: 7%;
     --luminosidad-panel: 12%;
     --luminosidad-elevado: 18%;
-    --luminosidad-borde: 52%;
+    --luminosidad-borde: 56%;
     --luminosidad-texto: 94%;
     --luminosidad-texto-suave: 74%;
     --luminosidad-acento: 66%;
-
-    --tono-enemigos: 190;
-    --saturacion-enemigos: 80%;
+    --luminosidad-acento-texto: 8%;
+    --luminosidad-juego-a: 4%;
+    --luminosidad-juego-b: 11%;
+    --luminosidad-estrella: 80%;
+    --luminosidad-nave: 92%;
+    --luminosidad-bala: 88%;
     --luminosidad-enemigos: 60%;
+    --luminosidad-peligro: 74%;
+    --luminosidad-bonus: 62%;
+    --luminosidad-vida: 60%;
+    --luminosidad-suelo: 48%;
+    --opacidad-respaldo: 0.72;
+    --brillo-puntos: 0 0 1rem hsl(var(--tono-interfaz) 90% 60% / 0.55);
 
-    --tono-peligro: 8;
-    --tono-bonus: 48;
+    /* ---------- Foco, bordes y color de esquema ---------- */
     --color-foco: hsl(0 0% 100%);
     --grosor-foco: 0.2rem;
     --borde-fino: 1px;
@@ -61,10 +77,12 @@
     --fuente-titulo: ui-monospace, "Cascadia Code", "SF Mono", Consolas, "Liberation Mono", monospace;
     --fuente-texto: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
     --texto-eyebrow: 0.72rem;
-    --texto-pequeno: 0.85rem;
+    --texto-pequeno: 0.875rem;
     --texto-base: 1rem;
-    --texto-marcador: 1.25rem;
-    --texto-titulo: clamp(1.15rem, 1rem + 1vw, 1.6rem);
+    --texto-marcador: 1.5rem;
+    --texto-puntos: clamp(2rem, 1.4rem + 2.4vw, 3.25rem);
+    --texto-titulo: clamp(1.1rem, 0.95rem + 0.8vw, 1.5rem);
+    --texto-titulo-cortina: clamp(1.6rem, 1.2rem + 2vw, 2.75rem);
     --peso-normal: 400;
     --peso-realce: 700;
     --peso-titulo: 800;
@@ -80,18 +98,20 @@
     /* ---------- Radios ---------- */
     --radio-boton: 0.6rem;
     --radio-modal: 1rem;
-    --radio-lienzo: 0.75rem;
+    --radio-pildora: 100vmax;
 
-    /* ---------- Geometría del escenario ----------
-       --alto-reservado: altura aproximada de cabecera + pista, que se resta a 100dvh
-       para que el canvas (proporción 3:4) quepa sin scroll en pantallas normales. */
-    --alto-reservado: 13rem;
-    --medida-modal: min(34rem, 92vw);
+    /* ---------- Geometría ---------- */
+    --medida-modal: min(32rem, 92vw);
+    --alto-minimo-escenario: 12rem;
+    /* Alto de botones y de la columna de puntos; layout.css los reduce en móvil apaisado. */
+    --alto-control: 2.5rem;
+    --ancho-puntos: 7rem;
 }
 
 :root,
-.pagina,
-.muestra {
+.pagina {
+    color-scheme: dark;
+
     /* ---------- DERIVADOS: interfaz monocromática ---------- */
     --color-fondo: hsl(var(--tono-interfaz) var(--saturacion-interfaz) var(--luminosidad-fondo));
     --color-panel: hsl(var(--tono-interfaz) var(--saturacion-interfaz) var(--luminosidad-panel));
@@ -102,40 +122,54 @@
     --color-texto-suave: hsl(var(--tono-interfaz) 25% var(--luminosidad-texto-suave));
     --color-acento: hsl(var(--tono-interfaz) 80% var(--luminosidad-acento));
     --color-acento-hover: hsl(var(--tono-interfaz) 80% calc(var(--luminosidad-acento) + 9%));
-    --color-acento-texto: hsl(var(--tono-interfaz) 40% 8%);
-    --color-respaldo: hsl(var(--tono-interfaz) 40% 4% / 0.72);
+    --color-acento-texto: hsl(var(--tono-interfaz) 40% var(--luminosidad-acento-texto));
+    --color-respaldo: hsl(var(--tono-interfaz) 40% var(--luminosidad-fondo) / var(--opacidad-respaldo));
 
-    /* ---------- DERIVADOS: enemigos, paleta triádica (+0°, +120°, +240°) ---------- */
+    /* ---------- DERIVADOS: enemigos, tríada fija (+0°, +120°, +240°) ---------- */
     --color-enemigo-0: hsl(var(--tono-enemigos) var(--saturacion-enemigos) var(--luminosidad-enemigos));
     --color-enemigo-1: hsl(calc(var(--tono-enemigos) + 120) var(--saturacion-enemigos) var(--luminosidad-enemigos));
     --color-enemigo-2: hsl(calc(var(--tono-enemigos) + 240) var(--saturacion-enemigos) var(--luminosidad-enemigos));
 
-    /* ---------- DERIVADOS: elementos del canvas y colores semánticos ---------- */
-    --color-nave: hsl(var(--tono-interfaz) 40% 92%);
-    --color-bala: hsl(var(--tono-interfaz) 100% 88%);
-    --color-estrella: hsl(var(--tono-interfaz) 40% 78%);
-    --color-bala-enemiga: hsl(var(--tono-peligro) 90% 62%);
-    --color-bonus: hsl(var(--tono-bonus) 100% 62%);
-    --color-peligro-texto: hsl(var(--tono-peligro) 90% 74%);
+    /* ---------- DERIVADOS: escenario del juego (canvas) y colores semánticos ---------- */
+    --color-juego-a: hsl(var(--tono-interfaz) 45% var(--luminosidad-juego-a));
+    --color-juego-b: hsl(var(--tono-interfaz) 45% var(--luminosidad-juego-b));
+    --color-estrella: hsl(var(--tono-interfaz) 40% var(--luminosidad-estrella));
+    --color-nave: hsl(var(--tono-interfaz) 40% var(--luminosidad-nave));
+    --color-bala: hsl(var(--tono-interfaz) 100% var(--luminosidad-bala));
+    --color-bala-enemiga: hsl(var(--tono-peligro) 90% var(--luminosidad-peligro));
+    --color-peligro-texto: hsl(var(--tono-peligro) 90% var(--luminosidad-peligro));
+    --color-bonus: hsl(var(--tono-bonus) 100% var(--luminosidad-bonus));
+    --color-vida: hsl(var(--tono-vida) 85% var(--luminosidad-vida));
+    --color-suelo: hsl(var(--tono-suelo) 60% var(--luminosidad-suelo));
 }
 
-/* ---------- Paletas de enemigos: solo cambian el tono base de la tríada ---------- */
-.pagina--paleta-cian,
-.muestra--cian {
-    --tono-enemigos: 190;
+/* ---------- Tema CLARO: mismo tono y mismas relaciones, otras luminosidades ---------- */
+.pagina--tema-claro {
+    color-scheme: light;
+    --luminosidad-fondo: 96%;
+    --luminosidad-panel: 100%;
+    --luminosidad-elevado: 92%;
+    --luminosidad-borde: 52%;
+    --luminosidad-texto: 12%;
+    --luminosidad-texto-suave: 34%;
+    --luminosidad-acento: 40%;
+    --luminosidad-acento-texto: 98%;
+    --luminosidad-juego-a: 97%;
+    --luminosidad-juego-b: 92%;
+    --luminosidad-estrella: 55%;
+    --luminosidad-nave: 18%;
+    --luminosidad-bala: 12%;
+    --luminosidad-enemigos: 26%;
+    --luminosidad-peligro: 40%;
+    --luminosidad-bonus: 26%;
+    --luminosidad-vida: 46%;
+    --luminosidad-suelo: 30%;
+    --opacidad-respaldo: 0.6;
+    --brillo-puntos: none;
+    --color-foco: hsl(0 0% 0%);
 }
 
-.pagina--paleta-ambar,
-.muestra--ambar {
-    --tono-enemigos: 35;
-}
-
-.pagina--paleta-rosa,
-.muestra--rosa {
-    --tono-enemigos: 330;
-}
-
-/* ---------- Alto contraste: más luminosidad de texto, bordes y saturación de figuras ---------- */
+/* ---------- Alto contraste (oscuro): más luminosidad de texto y bordes, figuras más saturadas ---------- */
 .pagina--alto-contraste {
     --luminosidad-fondo: 0%;
     --luminosidad-panel: 3%;
@@ -143,7 +177,28 @@
     --luminosidad-borde: 85%;
     --luminosidad-texto: 100%;
     --luminosidad-texto-suave: 94%;
+    --luminosidad-juego-a: 0%;
+    --luminosidad-juego-b: 4%;
     --saturacion-enemigos: 100%;
     --luminosidad-enemigos: 68%;
     --grosor-foco: 0.3rem;
+}
+
+/* ---------- Alto contraste sobre tema claro ---------- */
+.pagina--tema-claro.pagina--alto-contraste {
+    --luminosidad-fondo: 100%;
+    --luminosidad-panel: 100%;
+    --luminosidad-elevado: 94%;
+    --luminosidad-borde: 15%;
+    --luminosidad-texto: 0%;
+    --luminosidad-texto-suave: 10%;
+    --luminosidad-juego-a: 100%;
+    --luminosidad-juego-b: 94%;
+    --luminosidad-estrella: 35%;
+    --luminosidad-nave: 0%;
+    --luminosidad-bala: 0%;
+    --saturacion-enemigos: 100%;
+    --luminosidad-enemigos: 22%;
+    --luminosidad-bonus: 26%;
+    --luminosidad-suelo: 22%;
 }

@@ -1,8 +1,8 @@
 /**
  * @file JuegoModel.js
  * @capa Modelo
- * @resumen Estado y reglas del matamarcianos: bucle de simulación, física, colisiones, puntuación y oleadas.
- * @depende Bala, Formacion, Nave, Nodriza, Mundo, Configuracion
+ * @resumen Estado y reglas del matamarcianos: bucle de simulación, física, colisiones, puntuación, oleadas y tamaño del mundo.
+ * @depende Bala, Configuracion, Formacion, Mundo, Nave, Nodriza
  * @usadoPor app.js, AppController, LienzoView (solo lectura)
  *
  * Reglas de la capa:
@@ -15,12 +15,14 @@
  *      "oleada"       empieza una oleada nueva  detail: { numero }
  *      "fin"          terminó la partida        detail: { puntos, oleada, motivo }
  *  - La aleatoriedad se inyecta (`aleatorio`) para poder probar el modelo de forma determinista.
+ *  - El tamaño del mundo NO es fijo: se adapta a la proporción del canvas
+ *    (ver Mundo.js y `redimensionar`) para que el juego ocupe toda la pantalla.
  */
 
 import { Bala, PROPIETARIOS } from "./Bala.js";
 import { Configuracion } from "./Configuracion.js";
 import { Formacion } from "./Formacion.js";
-import { MUNDO } from "./Mundo.js";
+import { calcularMundo, MUNDO_INICIAL } from "./Mundo.js";
 import { Nave } from "./Nave.js";
 import { Nodriza, PUNTOS_NODRIZA } from "./Nodriza.js";
 
@@ -46,6 +48,8 @@ const FILAS_INICIALES = 4;
 export class JuegoModel extends EventTarget {
     /** @type {() => number} Generador de números en [0,1). */
     #aleatorio;
+    /** @type {{ancho:number, alto:number}} Tamaño lógico actual del mundo. */
+    #mundo = { ...MUNDO_INICIAL };
     /** @type {string} Uno de ESTADOS. */
     #estado = ESTADOS.INICIAL;
     /** @type {{vidas:number, factorVelocidad:number, intervaloDisparo:number}} Parámetros de la partida en curso. */
@@ -83,6 +87,16 @@ export class JuegoModel extends EventTarget {
     /** @returns {string} Estado actual (uno de ESTADOS). */
     get estado() {
         return this.#estado;
+    }
+
+    /** @returns {number} Ancho lógico del mundo. */
+    get ancho() {
+        return this.#mundo.ancho;
+    }
+
+    /** @returns {number} Alto lógico del mundo. */
+    get alto() {
+        return this.#mundo.alto;
     }
 
     /** @returns {Nave} Nave del jugador (solo lectura para las vistas). */
@@ -123,6 +137,37 @@ export class JuegoModel extends EventTarget {
     /** @returns {number} Vidas restantes de la nave. */
     get vidas() {
         return this.#nave.vidas;
+    }
+
+    /** @returns {number} Vidas con las que empezó la partida (para dibujar corazones llenos y vacíos). */
+    get vidasIniciales() {
+        return this.#parametros.vidas;
+    }
+
+    /**
+     * Adapta el mundo a la proporción del canvas para que el juego ocupe toda
+     * la pantalla. Recoloca la nave y la formación y descarta lo que quede fuera.
+     * @param {number} proporcion - Ancho dividido por alto del canvas, en píxeles.
+     * @returns {void}
+     */
+    redimensionar(proporcion) {
+        const nuevo = calcularMundo(proporcion);
+        if (nuevo.ancho === this.#mundo.ancho && nuevo.alto === this.#mundo.alto) {
+            return;
+        }
+        this.#mundo = nuevo;
+        this.#nave.colocar(nuevo.ancho, nuevo.alto, this.#estado === ESTADOS.INICIAL);
+        if (this.#estado === ESTADOS.INICIAL) {
+            // Aún no se juega: la formación se regenera para aprovechar el ancho nuevo.
+            this.#formacion.crear(FILAS_INICIALES, nuevo.ancho);
+        } else {
+            this.#formacion.ajustar(nuevo.ancho);
+        }
+        this.#balasJugador = this.#balasJugador.filter((bala) => !bala.estaFuera(nuevo.alto));
+        this.#balasEnemigas = this.#balasEnemigas.filter((bala) => !bala.estaFuera(nuevo.alto));
+        if (this.#nodriza?.estaFuera(nuevo.ancho)) {
+            this.#nodriza = null;
+        }
     }
 
     /**
@@ -212,6 +257,7 @@ export class JuegoModel extends EventTarget {
         this.#formacion.avanzar(
             dt,
             VELOCIDAD_FORMACION_BASE * this.#parametros.factorVelocidad * (1 + 0.12 * (this.#oleada - 1)),
+            this.#mundo.ancho,
         );
         this.#dispararEnemigos(dt);
         this.#moverNodriza(dt);
@@ -231,14 +277,14 @@ export class JuegoModel extends EventTarget {
      */
     #preparar(parametros) {
         this.#parametros = parametros;
-        this.#nave = new Nave(parametros.vidas);
+        this.#nave = new Nave(parametros.vidas, this.#mundo.ancho, this.#mundo.alto);
         this.#balasJugador = [];
         this.#balasEnemigas = [];
         this.#nodriza = null;
         this.#puntos = 0;
         this.#oleada = 1;
         this.liberarEntrada();
-        this.#formacion.crear(FILAS_INICIALES);
+        this.#formacion.crear(FILAS_INICIALES, this.#mundo.ancho);
         this.#relojDisparoEnemigo = parametros.intervaloDisparo;
         this.#relojNodriza = 12 + this.#aleatorio() * 8;
         this.#estado = ESTADOS.INICIAL;
@@ -253,7 +299,7 @@ export class JuegoModel extends EventTarget {
         const nave = this.#nave;
         nave.avanzarTiempo(dt);
         const direccion = (this.#entrada.derecha ? 1 : 0) - (this.#entrada.izquierda ? 1 : 0);
-        nave.mover(direccion, dt);
+        nave.mover(direccion, dt, this.#mundo.ancho);
 
         if (this.#entrada.disparo && nave.puedeDisparar && this.#balasJugador.length < MAX_BALAS_JUGADOR) {
             this.#balasJugador.push(new Bala(nave.centroX, nave.y - Bala.ALTO, -VELOCIDAD_BALA_JUGADOR, PROPIETARIOS.JUGADOR));
@@ -270,8 +316,8 @@ export class JuegoModel extends EventTarget {
     #moverBalas(dt) {
         this.#balasJugador.forEach((bala) => bala.mover(dt));
         this.#balasEnemigas.forEach((bala) => bala.mover(dt));
-        this.#balasJugador = this.#balasJugador.filter((bala) => !bala.estaFuera(MUNDO.alto));
-        this.#balasEnemigas = this.#balasEnemigas.filter((bala) => !bala.estaFuera(MUNDO.alto));
+        this.#balasJugador = this.#balasJugador.filter((bala) => !bala.estaFuera(this.#mundo.alto));
+        this.#balasEnemigas = this.#balasEnemigas.filter((bala) => !bala.estaFuera(this.#mundo.alto));
     }
 
     /**
@@ -303,7 +349,7 @@ export class JuegoModel extends EventTarget {
     #moverNodriza(dt) {
         if (this.#nodriza) {
             this.#nodriza.mover(dt);
-            if (this.#nodriza.estaFuera(MUNDO.ancho)) {
+            if (this.#nodriza.estaFuera(this.#mundo.ancho)) {
                 this.#nodriza = null;
             }
             return;
@@ -312,8 +358,8 @@ export class JuegoModel extends EventTarget {
         if (this.#relojNodriza <= 0) {
             const haciaLaDerecha = this.#aleatorio() < 0.5;
             this.#nodriza = haciaLaDerecha
-                ? new Nodriza(-44, VELOCIDAD_NODRIZA)
-                : new Nodriza(MUNDO.ancho, -VELOCIDAD_NODRIZA);
+                ? new Nodriza(-Nodriza.ANCHO, VELOCIDAD_NODRIZA)
+                : new Nodriza(this.#mundo.ancho, -VELOCIDAD_NODRIZA);
             this.#relojNodriza = 15 + this.#aleatorio() * 10;
         }
     }
@@ -373,7 +419,7 @@ export class JuegoModel extends EventTarget {
     #siguienteOleada() {
         this.#oleada += 1;
         this.#balasEnemigas = [];
-        this.#formacion.crear(FILAS_INICIALES + this.#oleada - 1);
+        this.#formacion.crear(FILAS_INICIALES + this.#oleada - 1, this.#mundo.ancho);
         this.#emitir("oleada", { numero: this.#oleada });
         this.#notificar();
     }

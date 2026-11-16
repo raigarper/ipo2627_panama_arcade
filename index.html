@@ -7,7 +7,7 @@
 
     Convenciones de este fichero:
       - Los hooks de JavaScript son atributos data-* (data-lienzo, data-cabecera...). Nunca ids ni clases de estilo.
-      - Los ids que aparecen solo existen para relaciones ARIA (aria-labelledby) y el enlace de salto; el CSS no los usa.
+      - Los ids que aparecen solo existen para relaciones ARIA (aria-labelledby, for) y el enlace de salto; el CSS no los usa.
       - Los diálogos son <dialog> nativos: foco atrapado, Escape y capa superior los resuelve el navegador.
 -->
 <!DOCTYPE html>
@@ -15,8 +15,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="dark">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="color-scheme" content="dark light">
     <meta name="description" content="Matamarcianos arcade hecho con Canvas API, HTML, CSS y JavaScript nativos.">
     <title>Matamarcianos Arcade</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -25,34 +25,31 @@
 </head>
 
 <body>
-    <!-- Raíz de la aplicación. PaginaView le añade las clases de paleta y de alto contraste. -->
-    <div class="pagina" data-pagina>
+    <!-- Raíz de la aplicación. PaginaView le añade las clases de tema y de alto contraste. -->
+    <div class="pagina pagina--tema-oscuro" data-pagina>
         <a class="salto" href="#zona-juego">Saltar al juego</a>
 
         <!-- ================= CABECERA =================
-             Título, marcadores de progreso y acciones. CabeceraView la gestiona.
-             Tres grupos separados por proximidad (Gestalt): identidad, marcadores y mandos. -->
+             Identidad, marcadores y mandos, en tres grupos separados por proximidad (Gestalt).
+             CabeceraView la gestiona. El marcador es lo más visible: puntos grandes en el centro. -->
         <header class="cabecera" data-cabecera>
             <div class="cabecera__identidad">
                 <p class="cabecera__eyebrow">Interacción Persona-Ordenador</p>
-                <h1 class="cabecera__titulo">Matamarcianos Arcade</h1>
+                <h1 class="cabecera__titulo">Matamarcianos</h1>
             </div>
 
-            <!-- Indicadores de progreso: puntos, vidas y oleada. -->
-            <dl class="cabecera__marcadores" aria-label="Progreso de la partida">
-                <div class="marcador">
-                    <dt class="marcador__etiqueta">Puntos</dt>
-                    <dd class="marcador__valor" data-marcador-puntos>0</dd>
+            <!-- Indicadores de progreso: vidas (corazones), puntos y oleada. -->
+            <div class="cabecera__hud" role="group" aria-label="Progreso de la partida">
+                <div class="vidas" data-marcador-vidas role="img" aria-label="Vidas: 3 de 3"></div>
+                <div class="puntos">
+                    <span class="puntos__etiqueta">Puntos</span>
+                    <span class="puntos__valor" data-marcador-puntos>0</span>
                 </div>
-                <div class="marcador">
-                    <dt class="marcador__etiqueta">Vidas</dt>
-                    <dd class="marcador__valor" data-marcador-vidas>3</dd>
+                <div class="oleada">
+                    <span class="oleada__etiqueta">Oleada</span>
+                    <span class="oleada__valor" data-marcador-oleada>1</span>
                 </div>
-                <div class="marcador">
-                    <dt class="marcador__etiqueta">Oleada</dt>
-                    <dd class="marcador__valor" data-marcador-oleada>1</dd>
-                </div>
-            </dl>
+            </div>
 
             <div class="cabecera__mandos">
                 <!-- Controles de partida: comenzar, pausar/reanudar y finalizar. -->
@@ -91,18 +88,26 @@
         </header>
 
         <!-- ================= ZONA DE JUEGO =================
-             Canvas del juego, cortina de mensajes y mandos táctiles. -->
+             El canvas ocupa TODO el espacio disponible bajo la cabecera, sin marco.
+             La cortina (inicio / pausa) flota encima con position:absolute sin desplazarlo. -->
         <main class="zona-juego" id="zona-juego">
             <h2 class="visualmente-oculto">Zona de juego</h2>
 
-            <!-- Escenario: el canvas es la "figura" (Gestalt) y todo lo demás es servicio.
-                 La cortina flota encima con position:absolute sin desplazar el canvas. -->
             <div class="escenario">
                 <canvas class="escenario__lienzo" data-lienzo tabindex="0" role="img"
                     aria-label="Zona de juego del matamarcianos."></canvas>
+
+                <!-- Cortina de inicio y pausa: AvisosView cambia el texto y el botón según el estado.
+                     Sustituye a la antigua línea de ayuda bajo el juego: los controles se ven aquí. -->
                 <div class="escenario__cortina" data-cortina>
-                    <p class="escenario__titulo" data-cortina-titulo>Listo para jugar</p>
-                    <p class="escenario__texto" data-cortina-texto>Pulsa Comenzar (o Enter) para empezar la partida.</p>
+                    <p class="escenario__titulo" data-cortina-titulo>¡Defiende la Tierra!</p>
+                    <p class="escenario__texto" data-cortina-texto>Destruye a los invasores antes de que lleguen hasta ti.</p>
+                    <button class="boton boton--primario boton--grande" type="button" data-cortina-boton>Comenzar</button>
+                    <p class="escenario__teclas">
+                        <span class="tecla-grupo"><kbd class="tecla">←</kbd><kbd class="tecla">→</kbd> mover</span>
+                        <span class="tecla-grupo"><kbd class="tecla">Espacio</kbd> disparar</span>
+                        <span class="tecla-grupo"><kbd class="tecla">P</kbd> pausa</span>
+                    </p>
                 </div>
             </div>
 
@@ -117,14 +122,12 @@
                 </button>
             </div>
 
-            <p class="zona-juego__pista">Mueve la nave con las flechas (o A/D) y dispara con la barra espaciadora. Pausa con P.</p>
-
             <!-- Anuncios para lectores de pantalla (oleada, impacto, fin). No se ven en pantalla. -->
             <p class="visualmente-oculto" data-anuncios aria-live="polite"></p>
         </main>
 
         <!-- ================= DIÁLOGO DE AYUDA =================
-             Reglas del juego, controles y leyenda de enemigos. AyudaView lo abre. -->
+             Reglas del juego, controles y leyenda de enemigos. AyudaView lo abre y dibuja los sprites. -->
         <dialog class="modal" data-ayuda aria-labelledby="ayuda-titulo">
             <div class="modal__contenido">
                 <div class="modal__cabecera">
@@ -134,13 +137,13 @@
 
                 <section class="modal__seccion">
                     <h3 class="modal__subtitulo">Objetivo</h3>
-                    <p class="modal__texto">Destruye a todos los invasores de cada oleada antes de que lleguen hasta tu nave. Cada oleada nueva es más rápida y trae más enemigos.</p>
+                    <p class="modal__texto">Destruye a todos los invasores de cada oleada antes de que lleguen hasta tu cañón. Cada oleada nueva es más rápida y trae más enemigos.</p>
                 </section>
 
                 <section class="modal__seccion">
                     <h3 class="modal__subtitulo">Controles</h3>
                     <ul class="modal__lista">
-                        <li><strong>Mover:</strong> flechas izquierda y derecha, o A y D (según el esquema de ajustes).</li>
+                        <li><strong>Mover:</strong> flechas izquierda y derecha, o A y D (según los ajustes).</li>
                         <li><strong>Disparar:</strong> barra espaciadora. Solo puedes tener 3 disparos en pantalla.</li>
                         <li><strong>Pausa:</strong> tecla P o Escape. La partida también se pausa si cambias de pestaña.</li>
                         <li><strong>Táctil:</strong> en móvil y tableta aparecen botones bajo el juego.</li>
@@ -150,17 +153,17 @@
                 <section class="modal__seccion">
                     <h3 class="modal__subtitulo">Enemigos y puntos</h3>
                     <ul class="leyenda">
-                        <li class="leyenda__item"><span class="leyenda__forma" data-leyenda-forma="0"></span>Círculo: 10 puntos</li>
-                        <li class="leyenda__item"><span class="leyenda__forma" data-leyenda-forma="1"></span>Triángulo: 20 puntos</li>
-                        <li class="leyenda__item"><span class="leyenda__forma" data-leyenda-forma="2"></span>Rombo: 30 puntos</li>
-                        <li class="leyenda__item"><span class="leyenda__forma leyenda__forma--nodriza" aria-hidden="true"></span>Nave nodriza (cruza arriba): 100 puntos</li>
+                        <li class="leyenda__item"><span class="leyenda__sprite" data-leyenda-sprite="enemigo0"></span>Pulpo: 10 puntos</li>
+                        <li class="leyenda__item"><span class="leyenda__sprite" data-leyenda-sprite="enemigo1"></span>Cangrejo: 20 puntos</li>
+                        <li class="leyenda__item"><span class="leyenda__sprite" data-leyenda-sprite="enemigo2"></span>Calamar: 30 puntos</li>
+                        <li class="leyenda__item"><span class="leyenda__sprite leyenda__sprite--ancho" data-leyenda-sprite="nodriza"></span>Platillo nodriza (cruza arriba): 100 puntos</li>
                     </ul>
-                    <p class="modal__texto">Los disparos enemigos son rombos alargados de color rojizo. Si te alcanza uno pierdes una vida y quedas protegido unos instantes.</p>
+                    <p class="modal__texto">Los disparos enemigos son rayos en zigzag. Si te alcanza uno pierdes un corazón y quedas protegido unos instantes.</p>
                 </section>
 
                 <section class="modal__seccion">
                     <h3 class="modal__subtitulo">Fin de la partida</h3>
-                    <p class="modal__texto">La partida termina si te quedas sin vidas, si los invasores llegan a tu altura o si pulsas Finalizar.</p>
+                    <p class="modal__texto">La partida termina si te quedas sin corazones, si los invasores llegan a tu altura o si pulsas Finalizar.</p>
                 </section>
 
                 <button class="boton" type="button" data-cerrar>Cerrar</button>
@@ -168,7 +171,9 @@
         </dialog>
 
         <!-- ================= DIÁLOGO DE AJUSTES =================
-             Cada botón lleva data-control (qué ajuste) y data-valor (qué valor). AjustesView los enlaza.
+             Cada control lleva data-control (qué ajuste es). AjustesView los enlaza de forma genérica:
+               - deslizador: data-valores lista los valores de cada posición;
+               - interruptor: data-valor-activo / data-valor-inactivo son sus dos valores.
              Dificultad: se aplica a la partida siguiente. El resto: efecto inmediato. -->
         <dialog class="modal" data-ajustes aria-labelledby="ajustes-titulo">
             <div class="modal__contenido">
@@ -177,62 +182,61 @@
                     <button class="boton-icono boton-icono--pequeno" type="button" data-cerrar aria-label="Cerrar ajustes">×</button>
                 </div>
 
-                <div class="modal__grupo">
-                    <span class="modal__etiqueta" id="etiqueta-dificultad">Dificultad</span>
-                    <div class="opciones" role="group" aria-labelledby="etiqueta-dificultad">
-                        <button class="opcion" type="button" data-control="dificultad" data-valor="facil">Fácil</button>
-                        <button class="opcion" type="button" data-control="dificultad" data-valor="normal">Normal</button>
-                        <button class="opcion" type="button" data-control="dificultad" data-valor="dificil">Difícil</button>
-                    </div>
-                    <p class="modal__aviso modal__aviso--oculta" data-aviso-dificultad aria-live="polite">Se aplicará en la próxima partida.</p>
-                </div>
+                <section class="modal__grupo" aria-labelledby="grupo-partida">
+                    <h3 class="modal__etiqueta" id="grupo-partida">Partida</h3>
 
-                <div class="modal__grupo">
-                    <span class="modal__etiqueta" id="etiqueta-controles">Controles</span>
-                    <div class="opciones" role="group" aria-labelledby="etiqueta-controles">
-                        <button class="opcion" type="button" data-control="controles" data-valor="flechas">Flechas ← →</button>
-                        <button class="opcion" type="button" data-control="controles" data-valor="wasd">A / D</button>
+                    <div class="deslizador" data-deslizador>
+                        <label class="deslizador__titulo" for="dificultad-rango">Dificultad</label>
+                        <input class="deslizador__control" id="dificultad-rango" type="range" min="0" max="2" step="1" value="1"
+                            data-control="dificultad" data-valores="facil normal dificil">
+                        <div class="deslizador__marcas" aria-hidden="true">
+                            <span class="deslizador__marca" data-marca="facil">Fácil</span>
+                            <span class="deslizador__marca" data-marca="normal">Normal</span>
+                            <span class="deslizador__marca" data-marca="dificil">Difícil</span>
+                        </div>
+                        <p class="modal__aviso modal__aviso--oculta" data-aviso-dificultad aria-live="polite">Se aplicará en la próxima partida.</p>
                     </div>
-                </div>
 
-                <!-- Muestras de paleta: cada botón enseña los 3 enemigos ya coloreados.
-                     AjustesView rellena los huecos [data-muestra-forma] con SVG. -->
-                <div class="modal__grupo">
-                    <span class="modal__etiqueta" id="etiqueta-paleta">Paleta de enemigos</span>
-                    <div class="muestras" role="group" aria-labelledby="etiqueta-paleta">
-                        <button class="muestra muestra--cian" type="button" data-control="paleta" data-valor="cian" aria-label="Paleta cian">
-                            <span class="muestra__forma" data-muestra-forma="0"></span>
-                            <span class="muestra__forma" data-muestra-forma="1"></span>
-                            <span class="muestra__forma" data-muestra-forma="2"></span>
-                        </button>
-                        <button class="muestra muestra--ambar" type="button" data-control="paleta" data-valor="ambar" aria-label="Paleta ámbar">
-                            <span class="muestra__forma" data-muestra-forma="0"></span>
-                            <span class="muestra__forma" data-muestra-forma="1"></span>
-                            <span class="muestra__forma" data-muestra-forma="2"></span>
-                        </button>
-                        <button class="muestra muestra--rosa" type="button" data-control="paleta" data-valor="rosa" aria-label="Paleta rosa">
-                            <span class="muestra__forma" data-muestra-forma="0"></span>
-                            <span class="muestra__forma" data-muestra-forma="1"></span>
-                            <span class="muestra__forma" data-muestra-forma="2"></span>
-                        </button>
-                    </div>
-                </div>
+                    <label class="interruptor">
+                        <span class="interruptor__texto">
+                            <span class="interruptor__titulo">Mover con A / D</span>
+                            <span class="interruptor__ayuda">Apagado: flechas ← →.</span>
+                        </span>
+                        <input class="interruptor__control" type="checkbox" role="switch"
+                            data-control="controles" data-valor-activo="wasd" data-valor-inactivo="flechas">
+                    </label>
+                </section>
 
-                <div class="modal__grupo">
-                    <span class="modal__etiqueta" id="etiqueta-contraste">Alto contraste</span>
-                    <div class="opciones" role="group" aria-labelledby="etiqueta-contraste">
-                        <button class="opcion" type="button" data-control="alto-contraste" data-valor="false">Desactivado</button>
-                        <button class="opcion" type="button" data-control="alto-contraste" data-valor="true">Activado</button>
-                    </div>
-                </div>
+                <section class="modal__grupo" aria-labelledby="grupo-apariencia">
+                    <h3 class="modal__etiqueta" id="grupo-apariencia">Apariencia y sonido</h3>
 
-                <div class="modal__grupo">
-                    <span class="modal__etiqueta" id="etiqueta-sonido">Sonido</span>
-                    <div class="opciones" role="group" aria-labelledby="etiqueta-sonido">
-                        <button class="opcion" type="button" data-control="sonido" data-valor="false">Silenciado</button>
-                        <button class="opcion" type="button" data-control="sonido" data-valor="true">Activado</button>
-                    </div>
-                </div>
+                    <label class="interruptor">
+                        <span class="interruptor__texto">
+                            <span class="interruptor__titulo">Tema oscuro</span>
+                            <span class="interruptor__ayuda">Apagado: tema claro.</span>
+                        </span>
+                        <input class="interruptor__control" type="checkbox" role="switch"
+                            data-control="tema" data-valor-activo="oscuro" data-valor-inactivo="claro" checked>
+                    </label>
+
+                    <label class="interruptor">
+                        <span class="interruptor__texto">
+                            <span class="interruptor__titulo">Alto contraste</span>
+                            <span class="interruptor__ayuda">Más contraste en textos, bordes y enemigos.</span>
+                        </span>
+                        <input class="interruptor__control" type="checkbox" role="switch"
+                            data-control="alto-contraste" data-valor-activo="true" data-valor-inactivo="false">
+                    </label>
+
+                    <label class="interruptor">
+                        <span class="interruptor__texto">
+                            <span class="interruptor__titulo">Sonido</span>
+                            <span class="interruptor__ayuda">Efectos de disparo, explosión y bonus.</span>
+                        </span>
+                        <input class="interruptor__control" type="checkbox" role="switch"
+                            data-control="sonido" data-valor-activo="true" data-valor-inactivo="false">
+                    </label>
+                </section>
 
                 <button class="boton" type="button" data-cerrar>Cerrar</button>
             </div>

@@ -1,7 +1,7 @@
 /**
  * @file AvisosView.js
  * @capa Vista
- * @resumen Cortina de mensajes sobre el canvas (listo / pausa) y región `aria-live` para lectores de pantalla.
+ * @resumen Pantalla de inicio y de pausa sobre el canvas (con botón de acción) y región `aria-live` para lectores de pantalla.
  * @depende JuegoModel (solo la constante ESTADOS)
  * @usadoPor app.js, AppController
  *
@@ -15,25 +15,29 @@ import { ESTADOS } from "../models/JuegoModel.js";
 
 /** Textos de la cortina por estado; los estados sin entrada ocultan la cortina. */
 const MENSAJES = Object.freeze({
-    [ESTADOS.INICIAL]: { titulo: "Listo para jugar", texto: "Pulsa Comenzar (o Enter) para empezar la partida." },
-    [ESTADOS.PAUSA]: { titulo: "Pausa", texto: "Pulsa Reanudar (o P) para continuar." },
+    [ESTADOS.INICIAL]: { titulo: "¡Defiende la Tierra!", texto: "Destruye a los invasores antes de que lleguen hasta ti.", boton: "Comenzar" },
+    [ESTADOS.PAUSA]: { titulo: "Pausa", texto: "La partida está detenida.", boton: "Reanudar" },
 });
 
 export class AvisosView {
     #cortina;
     #titulo;
     #texto;
+    #boton;
     #anuncios;
 
     /**
      * @param {HTMLElement} cortina - Capa `[data-cortina]` sobre el canvas.
      * @param {HTMLElement} anuncios - Región `[data-anuncios]` con `aria-live="polite"`.
+     * @param {{alConfirmar: () => void}} callbacks - Aviso al controlador al pulsar el botón de la cortina.
      */
-    constructor(cortina, anuncios) {
+    constructor(cortina, anuncios, callbacks) {
         this.#cortina = cortina;
         this.#titulo = cortina.querySelector("[data-cortina-titulo]");
         this.#texto = cortina.querySelector("[data-cortina-texto]");
+        this.#boton = cortina.querySelector("[data-cortina-boton]");
         this.#anuncios = anuncios;
+        this.#boton.addEventListener("click", () => callbacks.alConfirmar());
     }
 
     /**
@@ -47,6 +51,7 @@ export class AvisosView {
         if (mensaje) {
             this.#titulo.textContent = mensaje.titulo;
             this.#texto.textContent = mensaje.texto;
+            this.#boton.textContent = mensaje.boton;
         }
     }
 

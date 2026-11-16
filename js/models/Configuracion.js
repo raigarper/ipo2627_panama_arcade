@@ -1,7 +1,7 @@
 /**
  * @file Configuracion.js
  * @capa Modelo
- * @resumen Ajustes del jugador (dificultad, controles, paleta, contraste, sonido). Objeto inmutable.
+ * @resumen Ajustes del jugador (dificultad, controles, tema, alto contraste, sonido). Objeto inmutable.
  * @depende Nada.
  * @usadoPor app.js, AppController, JuegoModel, AjustesView, PaginaView
  *
@@ -26,16 +26,16 @@ export const DIFICULTADES = Object.freeze({
 /** Esquemas de control disponibles (el disparo es siempre la barra espaciadora). */
 export const CONTROLES = Object.freeze(["flechas", "wasd"]);
 
-/** Paletas cromáticas de los enemigos (cada una es una tríada de 3 tonos). */
-export const PALETAS = Object.freeze(["cian", "ambar", "rosa"]);
+/** Temas de color de la interfaz. */
+export const TEMAS = Object.freeze(["oscuro", "claro"]);
 
 export class Configuracion {
     /** @type {string} Clave de DIFICULTADES. */
     dificultad;
     /** @type {string} Elemento de CONTROLES. */
     controles;
-    /** @type {string} Elemento de PALETAS. */
-    paleta;
+    /** @type {string} Elemento de TEMAS. */
+    tema;
     /** @type {boolean} Si el modo de alto contraste está activo. */
     altoContraste;
     /** @type {boolean} Si el sonido está activado (por defecto, silenciado). */
@@ -43,22 +43,22 @@ export class Configuracion {
 
     /**
      * Crea una configuración validando cada valor.
-     * @param {{dificultad?:string, controles?:string, paleta?:string, altoContraste?:boolean, sonido?:boolean}} [valores]
+     * @param {{dificultad?:string, controles?:string, tema?:string, altoContraste?:boolean, sonido?:boolean}} [valores]
      * @throws {RangeError} Si algún valor no está permitido.
      */
-    constructor({ dificultad = "normal", controles = "flechas", paleta = "cian", altoContraste = false, sonido = false } = {}) {
+    constructor({ dificultad = "normal", controles = "flechas", tema = "oscuro", altoContraste = false, sonido = false } = {}) {
         if (!(dificultad in DIFICULTADES)) {
             throw new RangeError(`Dificultad no válida: ${dificultad}`);
         }
         if (!CONTROLES.includes(controles)) {
             throw new RangeError(`Controles no válidos: ${controles}`);
         }
-        if (!PALETAS.includes(paleta)) {
-            throw new RangeError(`Paleta no válida: ${paleta}`);
+        if (!TEMAS.includes(tema)) {
+            throw new RangeError(`Tema no válido: ${tema}`);
         }
         this.dificultad = dificultad;
         this.controles = controles;
-        this.paleta = paleta;
+        this.tema = tema;
         this.altoContraste = Boolean(altoContraste);
         this.sonido = Boolean(sonido);
         Object.freeze(this);
@@ -88,11 +88,11 @@ export class Configuracion {
     }
 
     /**
-     * @param {string} paleta - Elemento de PALETAS.
-     * @returns {Configuracion} Copia con la paleta cambiada.
+     * @param {string} tema - Elemento de TEMAS.
+     * @returns {Configuracion} Copia con el tema cambiado.
      */
-    conPaleta(paleta) {
-        return new Configuracion({ ...this, paleta });
+    conTema(tema) {
+        return new Configuracion({ ...this, tema });
     }
 
     /**
