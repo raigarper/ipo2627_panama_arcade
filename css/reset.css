@@ -1,0 +1,70 @@
+/**
+ * @file reset.css
+ * @capa Estilos (1/4)
+ * @resumen Reset mínimo y accesible: caja de borde, márgenes a cero, foco visible y movimiento reducido.
+ * @depende variables.css (solo para el foco: --grosor-foco, --color-foco)
+ * @usadoPor style.css
+ */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+* {
+    margin: 0;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+    color-scheme: dark;
+    background: var(--color-fondo);
+}
+
+body {
+    min-block-size: 100dvh;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+canvas,
+svg {
+    display: block;
+    max-inline-size: 100%;
+}
+
+button,
+input {
+    font: inherit;
+    color: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+button:disabled {
+    cursor: not-allowed;
+}
+
+/* Foco visible para quien navega con teclado; nunca se elimina sin sustituirlo. */
+:focus-visible {
+    outline: var(--grosor-foco) solid var(--color-foco);
+    outline-offset: 0.15rem;
+}
+
+[hidden] {
+    display: none;
+}
+
+/* Respeta la preferencia del sistema: sin transiciones ni animaciones decorativas. */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation: none;
+        transition: none;
+        scroll-behavior: auto;
+    }
+}

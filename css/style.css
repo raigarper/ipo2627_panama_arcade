@@ -1,0 +1,18 @@
+/**
+ * @file style.css
+ * @capa Estilos (punto de entrada)
+ * @resumen Única hoja enlazada desde index.html; importa el resto en un orden de cascada FIJO.
+ * @depende reset.css, variables.css, layout.css, components.css
+ * @usadoPor index.html
+ *
+ * Orden obligatorio (de lo más genérico a lo más específico):
+ *   1. reset       normaliza el navegador
+ *   2. variables   tokens de color, tipografía, espacio y geometría
+ *   3. layout      composición (Grid y Flexbox) y posicionamiento
+ *   4. components  bloques BEM
+ */
+
+@import url("reset.css");
+@import url("variables.css");
+@import url("layout.css");
+@import url("components.css");

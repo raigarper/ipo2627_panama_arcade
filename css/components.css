@@ -1,0 +1,419 @@
+/**
+ * @file components.css
+ * @capa Estilos (4/4)
+ * @resumen Bloques BEM de la interfaz: cabecera, marcadores, botones, escenario, diálogos, opciones y leyenda.
+ * @depende variables.css, layout.css
+ * @usadoPor style.css
+ *
+ * CONVENCIONES
+ *   - BEM: `bloque__elemento--modificador`. Los elementos se anidan DENTRO de la
+ *     llave de su bloque (anidamiento nativo de CSS); los modificadores van con
+ *     `&.bloque--modificador` porque son clases de la misma etiqueta.
+ *   - Los estados los pone el JS como clases modificadoras (`--activa`, `--oculta`,
+ *     `--silenciado`), nunca escribiendo estilos en línea.
+ *   - Sin `!important`, sin selectores de id y sin colores literales: todo sale
+ *     de `variables.css`.
+ *
+ * GESTALT APLICADO
+ *   - Proximidad: botones de un mismo grupo juntos (--espacio-xs); grupos separados (--espacio-m).
+ *   - Semejanza: todos los controles comparten forma, radio y tipografía.
+ *   - Figura y fondo: el canvas (figura) destaca sobre la interfaz oscura (fondo).
+ *   - Región común: el escenario tiene borde y esquinas propios que lo delimitan.
+ */
+
+/* ============================== Cabecera ============================== */
+.cabecera__eyebrow {
+    font-size: var(--texto-eyebrow);
+    letter-spacing: var(--tracking-eyebrow);
+    text-transform: uppercase;
+    color: var(--color-texto-suave);
+}
+
+.cabecera__titulo {
+    font-family: var(--fuente-titulo);
+    font-size: var(--texto-titulo);
+    font-weight: var(--peso-titulo);
+    line-height: 1.15;
+}
+
+/* ============================== Marcador ============================== */
+.marcador {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .marcador__etiqueta {
+        font-size: var(--texto-eyebrow);
+        letter-spacing: var(--tracking-eyebrow);
+        text-transform: uppercase;
+        color: var(--color-texto-suave);
+    }
+
+    .marcador__valor {
+        font-family: var(--fuente-titulo);
+        font-size: var(--texto-marcador);
+        font-weight: var(--peso-realce);
+        font-variant-numeric: tabular-nums;
+        line-height: 1.2;
+    }
+}
+
+/* ============================== Botón de texto ============================== */
+.boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--espacio-xs);
+    min-block-size: 2.5rem;
+    padding-inline: var(--espacio-m);
+    background: var(--color-elevado);
+    color: var(--color-texto);
+    border: var(--borde-fino) solid var(--color-borde);
+    border-radius: var(--radio-boton);
+    font-size: var(--texto-pequeno);
+    font-weight: var(--peso-realce);
+    transition: background-color 150ms, border-color 150ms;
+
+    &:hover:not(:disabled) {
+        background: var(--color-sobrevuelo);
+    }
+
+    &:disabled {
+        opacity: 0.45;
+    }
+
+    &.boton--primario {
+        background: var(--color-acento);
+        color: var(--color-acento-texto);
+        border-color: transparent;
+
+        &:hover:not(:disabled) {
+            background: var(--color-acento-hover);
+        }
+    }
+
+    &.boton--peligro {
+        color: var(--color-peligro-texto);
+        border-color: var(--color-peligro-texto);
+    }
+}
+
+/* ============================== Botón de icono ============================== */
+.boton-icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 2.5rem;
+    block-size: 2.5rem;
+    background: var(--color-elevado);
+    color: var(--color-texto);
+    border: var(--borde-fino) solid var(--color-borde);
+    border-radius: var(--radio-boton);
+    font-size: 1.25rem;
+    line-height: 1;
+    transition: background-color 150ms;
+
+    &:hover {
+        background: var(--color-sobrevuelo);
+    }
+
+    &.boton-icono--pequeno {
+        inline-size: 2rem;
+        block-size: 2rem;
+    }
+
+    /* El icono de sonido muestra ondas si suena y una "x" si está silenciado. */
+    .icono__tachado {
+        display: none;
+    }
+
+    &.boton-icono--silenciado {
+        .icono__ondas {
+            display: none;
+        }
+
+        .icono__tachado {
+            display: inline;
+        }
+    }
+}
+
+.icono {
+    inline-size: 1.15rem;
+    block-size: 1.15rem;
+}
+
+/* ============================== Escenario ============================== */
+.escenario {
+    background: var(--color-fondo);
+    border: var(--borde-fino) solid var(--color-borde);
+    border-radius: var(--radio-lienzo);
+    overflow: hidden;
+
+    .escenario__cortina {
+        background: var(--color-respaldo);
+    }
+
+    .escenario__titulo {
+        font-family: var(--fuente-titulo);
+        font-size: var(--texto-titulo);
+        font-weight: var(--peso-titulo);
+    }
+
+    .escenario__texto {
+        font-size: var(--texto-pequeno);
+        color: var(--color-texto-suave);
+    }
+}
+
+.zona-juego__pista {
+    max-inline-size: 34rem;
+    text-align: center;
+    font-size: var(--texto-pequeno);
+    color: var(--color-texto-suave);
+}
+
+/* ============================== Mando táctil ============================== */
+.mando {
+    min-block-size: 3.5rem;
+    background: var(--color-elevado);
+    color: var(--color-texto);
+    border: var(--borde-fino) solid var(--color-borde);
+    border-radius: var(--radio-boton);
+    font-weight: var(--peso-realce);
+    font-size: var(--texto-base);
+    /* Evita que el navegador interprete el gesto como scroll o zoom mientras se juega. */
+    touch-action: none;
+    user-select: none;
+
+    &:active {
+        background: var(--color-sobrevuelo);
+    }
+
+    &.mando--disparo {
+        background: var(--color-acento);
+        color: var(--color-acento-texto);
+        border-color: transparent;
+    }
+}
+
+/* ============================== Diálogo (modal) ============================== */
+.modal {
+    inline-size: var(--medida-modal);
+    max-block-size: 90dvh;
+    padding: 0;
+    background: var(--color-panel);
+    color: var(--color-texto);
+    border: var(--borde-fino) solid var(--color-borde);
+    border-radius: var(--radio-modal);
+    font-family: var(--fuente-texto);
+    overflow: auto;
+    /* Centrado explícito: lo que hace el navegador por defecto, pero sin depender de él. */
+    margin: auto;
+
+    &::backdrop {
+        background: var(--color-respaldo);
+    }
+
+    .modal__contenido {
+        display: flex;
+        flex-direction: column;
+        gap: var(--espacio-m);
+        padding: var(--espacio-l);
+    }
+
+    .modal__cabecera {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--espacio-s);
+    }
+
+    .modal__titulo {
+        font-family: var(--fuente-titulo);
+        font-size: 1.15rem;
+        font-weight: var(--peso-titulo);
+    }
+
+    .modal__subtitulo {
+        font-size: var(--texto-base);
+        font-weight: var(--peso-realce);
+        margin-block-end: var(--espacio-xs);
+    }
+
+    .modal__seccion {
+        display: flex;
+        flex-direction: column;
+        gap: var(--espacio-xs);
+    }
+
+    .modal__texto,
+    .modal__lista {
+        font-size: var(--texto-pequeno);
+        color: var(--color-texto-suave);
+    }
+
+    .modal__lista {
+        padding-inline-start: var(--espacio-m);
+    }
+
+    .modal__grupo {
+        display: flex;
+        flex-direction: column;
+        gap: var(--espacio-xs);
+    }
+
+    .modal__etiqueta {
+        font-size: var(--texto-eyebrow);
+        letter-spacing: var(--tracking-eyebrow);
+        text-transform: uppercase;
+        color: var(--color-texto-suave);
+    }
+
+    .modal__aviso {
+        font-size: var(--texto-pequeno);
+        color: var(--color-bonus);
+    }
+
+    .modal__aviso.modal__aviso--oculta {
+        display: none;
+    }
+
+    .modal__acciones {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--espacio-xs);
+    }
+}
+
+/* ============================== Opciones segmentadas ============================== */
+.opciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--espacio-xs);
+}
+
+.opcion {
+    min-block-size: 2.5rem;
+    padding-inline: var(--espacio-m);
+    background: var(--color-elevado);
+    color: var(--color-texto);
+    border: var(--borde-fino) solid var(--color-borde);
+    border-radius: var(--radio-boton);
+    font-size: var(--texto-pequeno);
+    font-weight: var(--peso-realce);
+
+    &:hover {
+        background: var(--color-sobrevuelo);
+    }
+
+    /* El estado activo se distingue por color Y por un borde más grueso (no solo color). */
+    &.opcion--activa {
+        background: var(--color-acento);
+        color: var(--color-acento-texto);
+        border-color: var(--color-texto);
+        border-width: 0.15rem;
+    }
+}
+
+/* ============================== Muestras de paleta ============================== */
+.muestras {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--espacio-s);
+}
+
+.muestra {
+    display: flex;
+    gap: var(--espacio-xs);
+    padding: var(--espacio-xs) var(--espacio-s);
+    background: var(--color-elevado);
+    border: var(--borde-fino) solid var(--color-borde);
+    border-radius: var(--radio-boton);
+
+    &:hover {
+        background: var(--color-sobrevuelo);
+    }
+
+    &.opcion--activa {
+        background: var(--color-elevado);
+        border-color: var(--color-texto);
+        border-width: 0.15rem;
+    }
+
+    .muestra__forma {
+        inline-size: 1.4rem;
+        block-size: 1.4rem;
+    }
+}
+
+/* ============================== Formas de enemigo (SVG) ============================== */
+.forma {
+    inline-size: 100%;
+    block-size: 100%;
+
+    .forma__cuerpo.forma__cuerpo--tipo-0 {
+        fill: var(--color-enemigo-0);
+    }
+
+    .forma__cuerpo.forma__cuerpo--tipo-1 {
+        fill: var(--color-enemigo-1);
+    }
+
+    .forma__cuerpo.forma__cuerpo--tipo-2 {
+        fill: var(--color-enemigo-2);
+    }
+}
+
+/* ============================== Leyenda de la ayuda ============================== */
+.leyenda {
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-xs);
+    padding: 0;
+    list-style: none;
+
+    .leyenda__item {
+        display: flex;
+        align-items: center;
+        gap: var(--espacio-s);
+        font-size: var(--texto-pequeno);
+    }
+
+    .leyenda__forma {
+        flex: none;
+        inline-size: 1.6rem;
+        block-size: 1.6rem;
+    }
+
+    .leyenda__forma.leyenda__forma--nodriza {
+        border-radius: 50%;
+        background: var(--color-bonus);
+        block-size: 0.9rem;
+    }
+}
+
+/* ============================== Resultados ============================== */
+.resultado {
+    display: flex;
+    gap: var(--espacio-l);
+
+    .resultado__dato {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .resultado__etiqueta {
+        font-size: var(--texto-eyebrow);
+        letter-spacing: var(--tracking-eyebrow);
+        text-transform: uppercase;
+        color: var(--color-texto-suave);
+    }
+
+    .resultado__valor {
+        font-family: var(--fuente-titulo);
+        font-size: 2rem;
+        font-weight: var(--peso-titulo);
+        font-variant-numeric: tabular-nums;
+    }
+}
