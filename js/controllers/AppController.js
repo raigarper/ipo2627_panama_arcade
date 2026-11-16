@@ -191,9 +191,10 @@ export class AppController {
     }
 
     /**
-     * Cambia la dificultad. No se aplica a una partida en curso (sería injusto
-     * cambiar las reglas a mitad): se avisa de que afectará a la siguiente.
-     * @param {string} dificultad - Clave de DIFICULTADES.
+     * Cambia la dificultad (continua, de 0 a 100). No se aplica a una partida en
+     * curso (sería injusto cambiar las reglas a mitad): se avisa de que afectará
+     * a la siguiente.
+     * @param {number} dificultad - Dificultad de 0 (Fácil) a 100 (Difícil).
      * @returns {void}
      */
     cambiarDificultad(dificultad) {
@@ -281,6 +282,7 @@ export class AppController {
         this.#paginaView.aplicar(this.#configuracion);
         this.#lienzoView.releerColores();
         this.#entradaView.establecerEsquema(this.#configuracion.controles);
+        this.#avisosView.mostrarControles(this.#configuracion.controles);
         this.#audioView.activar(this.#configuracion.sonido);
         this.#cabeceraView.actualizarSonido(this.#configuracion.sonido);
         this.#ajustesView.actualizar(this.#configuracion);

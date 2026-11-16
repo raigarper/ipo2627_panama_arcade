@@ -35,12 +35,12 @@ JuegoModel emite eventos   →  AppController los recibe →  actualiza vistas y
 
 | Fichero | Responsabilidad |
 |---|---|
-| `LienzoView.js` | Todo el dibujo con Canvas API a pantalla completa. Sprites pre-renderizados y escalados sin suavizado. Colores leídos del CSS. HiDPI. Estrellas (parallax) y partículas |
+| `LienzoView.js` | Todo el dibujo con Canvas API a pantalla completa. Sprites pre-renderizados y escalados sin suavizado. Colores leídos del CSS. HiDPI. Fondo en degradado liso (sin estrellas, para no tapar los disparos) y partículas solo en las explosiones |
 | `sprites.js` | Bitmaps de todos los sprites (una sola definición para canvas e interfaz) |
 | `spriteSvg.js` | Convierte un sprite en SVG para la leyenda de la ayuda y los corazones |
 | `CabeceraView.js` | Marcadores (corazones, puntos, oleada) y botones de partida (se habilitan según el estado) |
 | `AvisosView.js` | Pantalla de inicio/pausa con botón sobre el canvas y región `aria-live` |
-| `AjustesView.js` | Diálogo de ajustes con deslizador e interruptores genéricos; avisa al controlador |
+| `AjustesView.js` | Diálogo de ajustes; trata de forma genérica deslizador (valor numérico), tarjetas de teclas (radio) e interruptores; avisa al controlador |
 | `AyudaView.js` | Diálogo de ayuda con leyenda de enemigos (sprites reales) |
 | `FinView.js` | Diálogo de resultados |
 | `EntradaView.js` | Teclado (por `event.code`), botones táctiles y pérdida de foco |

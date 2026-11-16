@@ -45,6 +45,10 @@
     --tono-bonus: 46;
     --tono-vida: 350;
     --tono-suelo: 140;
+    /* Colores de la dificultad: verde (fácil), ámbar (normal) y rojo (difícil). Tono fijo; cambia la luminosidad. */
+    --tono-facil: 140;
+    --tono-medio: 45;
+    --tono-dificil: 6;
 
     /* ---------- ENTRADAS del tema OSCURO (por defecto): luminosidades ---------- */
     --luminosidad-fondo: 7%;
@@ -57,7 +61,6 @@
     --luminosidad-acento-texto: 8%;
     --luminosidad-juego-a: 4%;
     --luminosidad-juego-b: 11%;
-    --luminosidad-estrella: 80%;
     --luminosidad-nave: 92%;
     --luminosidad-bala: 88%;
     --luminosidad-enemigos: 60%;
@@ -65,6 +68,7 @@
     --luminosidad-bonus: 62%;
     --luminosidad-vida: 60%;
     --luminosidad-suelo: 48%;
+    --luminosidad-nivel: 56%;
     --opacidad-respaldo: 0.72;
     --brillo-puntos: 0 0 1rem hsl(var(--tono-interfaz) 90% 60% / 0.55);
 
@@ -133,7 +137,6 @@
     /* ---------- DERIVADOS: escenario del juego (canvas) y colores semánticos ---------- */
     --color-juego-a: hsl(var(--tono-interfaz) 45% var(--luminosidad-juego-a));
     --color-juego-b: hsl(var(--tono-interfaz) 45% var(--luminosidad-juego-b));
-    --color-estrella: hsl(var(--tono-interfaz) 40% var(--luminosidad-estrella));
     --color-nave: hsl(var(--tono-interfaz) 40% var(--luminosidad-nave));
     --color-bala: hsl(var(--tono-interfaz) 100% var(--luminosidad-bala));
     --color-bala-enemiga: hsl(var(--tono-peligro) 90% var(--luminosidad-peligro));
@@ -141,6 +144,9 @@
     --color-bonus: hsl(var(--tono-bonus) 100% var(--luminosidad-bonus));
     --color-vida: hsl(var(--tono-vida) 85% var(--luminosidad-vida));
     --color-suelo: hsl(var(--tono-suelo) 60% var(--luminosidad-suelo));
+    --color-nivel-facil: hsl(var(--tono-facil) 65% var(--luminosidad-nivel));
+    --color-nivel-medio: hsl(var(--tono-medio) 90% calc(var(--luminosidad-nivel) + 2%));
+    --color-nivel-dificil: hsl(var(--tono-dificil) 80% calc(var(--luminosidad-nivel) + 4%));
 }
 
 /* ---------- Tema CLARO: mismo tono y mismas relaciones, otras luminosidades ---------- */
@@ -156,7 +162,6 @@
     --luminosidad-acento-texto: 98%;
     --luminosidad-juego-a: 97%;
     --luminosidad-juego-b: 92%;
-    --luminosidad-estrella: 55%;
     --luminosidad-nave: 18%;
     --luminosidad-bala: 12%;
     --luminosidad-enemigos: 26%;
@@ -164,6 +169,7 @@
     --luminosidad-bonus: 26%;
     --luminosidad-vida: 46%;
     --luminosidad-suelo: 30%;
+    --luminosidad-nivel: 30%;
     --opacidad-respaldo: 0.6;
     --brillo-puntos: none;
     --color-foco: hsl(0 0% 0%);
@@ -182,6 +188,7 @@
     --saturacion-enemigos: 100%;
     --luminosidad-enemigos: 68%;
     --grosor-foco: 0.3rem;
+    --luminosidad-nivel: 64%;
 }
 
 /* ---------- Alto contraste sobre tema claro ---------- */
@@ -194,11 +201,11 @@
     --luminosidad-texto-suave: 10%;
     --luminosidad-juego-a: 100%;
     --luminosidad-juego-b: 94%;
-    --luminosidad-estrella: 35%;
     --luminosidad-nave: 0%;
     --luminosidad-bala: 0%;
     --saturacion-enemigos: 100%;
     --luminosidad-enemigos: 22%;
     --luminosidad-bonus: 26%;
     --luminosidad-suelo: 22%;
+    --luminosidad-nivel: 28%;
 }

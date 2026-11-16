@@ -444,13 +444,30 @@
 }
 
 /* ============================== Deslizador (dificultad) ==============================
-   Un `<input type="range">` nativo con apariencia propia. Los selectores de WebKit y
-   Firefox van en reglas separadas: un selector no reconocido invalida toda su regla. */
+   Un `<input type="range">` nativo y CONTINUO (0 a 100) con apariencia propia. La pista es un
+   degradado verde-ámbar-rojo y el pulgar toma el color del tramo actual (clase `--facil`,
+   `--normal` o `--dificil`, puesta por AjustesView). El color refuerza, pero no es el único
+   canal: también cambian la etiqueta resaltada y el resumen de texto.
+   Los selectores de WebKit y Firefox van en reglas separadas: un selector no reconocido
+   invalida toda su regla. */
 .deslizador {
+    --color-nivel-actual: var(--color-nivel-medio);
     display: flex;
     flex-direction: column;
     gap: var(--espacio-xs);
     padding-block: var(--espacio-xs);
+
+    &.deslizador--facil {
+        --color-nivel-actual: var(--color-nivel-facil);
+    }
+
+    &.deslizador--normal {
+        --color-nivel-actual: var(--color-nivel-medio);
+    }
+
+    &.deslizador--dificil {
+        --color-nivel-actual: var(--color-nivel-dificil);
+    }
 
     .deslizador__titulo {
         font-weight: var(--peso-realce);
@@ -465,50 +482,160 @@
         cursor: pointer;
 
         &::-webkit-slider-runnable-track {
-            block-size: 0.5rem;
-            background: var(--color-elevado);
-            border: var(--borde-fino) solid var(--color-borde);
+            block-size: 0.6rem;
+            background: linear-gradient(to right, var(--color-nivel-facil), var(--color-nivel-medio), var(--color-nivel-dificil));
             border-radius: var(--radio-pildora);
         }
 
         &::-webkit-slider-thumb {
             appearance: none;
-            inline-size: 1.5rem;
-            block-size: 1.5rem;
-            margin-block-start: -0.6rem;
-            background: var(--color-acento);
+            inline-size: 1.6rem;
+            block-size: 1.6rem;
+            margin-block-start: -0.5rem;
+            background: var(--color-nivel-actual);
             border: 0.2rem solid var(--color-texto);
             border-radius: 50%;
         }
 
         &::-moz-range-track {
-            block-size: 0.5rem;
-            background: var(--color-elevado);
-            border: var(--borde-fino) solid var(--color-borde);
+            block-size: 0.6rem;
+            background: linear-gradient(to right, var(--color-nivel-facil), var(--color-nivel-medio), var(--color-nivel-dificil));
             border-radius: var(--radio-pildora);
         }
 
         &::-moz-range-thumb {
-            inline-size: 1.1rem;
-            block-size: 1.1rem;
-            background: var(--color-acento);
+            inline-size: 1.2rem;
+            block-size: 1.2rem;
+            background: var(--color-nivel-actual);
             border: 0.2rem solid var(--color-texto);
             border-radius: 50%;
         }
     }
 
-    /* Etiquetas bajo el deslizador: Flexbox con los tres textos repartidos. */
+    /* Etiquetas bajo la pista: Grid de 3 columnas iguales, así "Normal" queda exactamente en el centro. */
     .deslizador__marcas {
-        display: flex;
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         font-size: var(--texto-pequeno);
         color: var(--color-texto-suave);
     }
 
-    /* La marca activa se distingue por peso y color (no solo color). */
+    .deslizador__marca {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--espacio-xs);
+
+        /* Punto de color delante del nombre del tramo. */
+        &::before {
+            content: "";
+            inline-size: 0.6rem;
+            block-size: 0.6rem;
+            border-radius: 50%;
+            background: var(--color-nivel-medio);
+        }
+
+        &.deslizador__marca--facil::before {
+            background: var(--color-nivel-facil);
+        }
+
+        &.deslizador__marca--dificil::before {
+            background: var(--color-nivel-dificil);
+        }
+
+        &.deslizador__marca--normal {
+            justify-self: center;
+        }
+
+        &.deslizador__marca--dificil {
+            justify-self: end;
+        }
+    }
+
+    /* La marca activa se distingue por peso y color de texto (no solo por el punto de color). */
     .deslizador__marca.deslizador__marca--activa {
         font-weight: var(--peso-titulo);
         color: var(--color-texto);
+    }
+
+    /* Resumen de lo que implica el nivel elegido: vidas y velocidad. */
+    .deslizador__resumen {
+        font-family: var(--fuente-titulo);
+        font-size: var(--texto-pequeno);
+        color: var(--color-texto);
+    }
+}
+
+/* ============================== Esquemas de teclas ==============================
+   Dos tarjetas seleccionables (`radio` nativo oculto) que muestran las teclas reales con las que
+   se jugará. El radio sigue siendo focusable: las flechas del teclado cambian de opción y el foco
+   se dibuja sobre la tarjeta. La opción elegida se distingue por borde grueso Y una marca ✓ (no
+   solo por color). */
+.esquemas {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--espacio-s);
+
+    .esquemas__etiqueta {
+        grid-column: 1 / -1;
+        font-weight: var(--peso-realce);
+    }
+
+    .esquemas__opcion {
+        display: flex;
+        cursor: pointer;
+    }
+
+    .esquemas__tarjeta {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: var(--espacio-xs);
+        padding: var(--espacio-s);
+        background: var(--color-elevado);
+        border: var(--borde-fino) solid var(--color-borde);
+        border-radius: var(--radio-boton);
+        transition: background-color 150ms, border-color 150ms;
+    }
+
+    .esquemas__opcion:hover .esquemas__tarjeta {
+        background: var(--color-sobrevuelo);
+    }
+
+    .esquemas__titulo {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-weight: var(--peso-realce);
+    }
+
+    .esquemas__fila {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--espacio-xs);
+        font-size: var(--texto-pequeno);
+        color: var(--color-texto-suave);
+    }
+
+    .esquemas__teclas {
+        display: inline-flex;
+        gap: 0.2rem;
+    }
+
+    /* Opción elegida. */
+    .esquemas__control:checked + .esquemas__tarjeta {
+        border: 0.15rem solid var(--color-acento);
+        padding: calc(var(--espacio-s) - 0.15rem + var(--borde-fino));
+    }
+
+    .esquemas__control:checked + .esquemas__tarjeta .esquemas__titulo::after {
+        content: "✓";
+        color: var(--color-acento);
+    }
+
+    .esquemas__control:focus-visible + .esquemas__tarjeta {
+        outline: var(--grosor-foco) solid var(--color-foco);
+        outline-offset: 0.15rem;
     }
 }
 

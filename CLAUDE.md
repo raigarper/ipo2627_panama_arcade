@@ -133,6 +133,7 @@ Orden de CSS en `style.css`: `reset` → `variables` → `layout` → `component
 - Cada sprite mide celdas × `CELDA` (3) unidades y **debe coincidir con la caja de colisión** de su entidad (enemigo 33×24, nave 39×24, nodriza 48×21).
 - Nodriza bonus: cruza arriba cada 15–25 s, 100 puntos.
 - La partida termina por: sin vidas, invasión (un enemigo llega a la altura de la nave) o abandono.
+- La **dificultad es continua** (0 a 100): `Configuracion.parametros` interpola vidas (redondeadas), velocidad y cadencia entre los niveles de referencia Fácil (0), Normal (50) y Difícil (100); `Configuracion.nivel` da el tramo para etiquetas y colores. Los cuatro tramos de referencia viven en `DIFICULTADES`.
 - La dificultad (vidas, velocidad, frecuencia de disparo) **no cambia una partida en curso**: aplica a la siguiente. Controles, tema, contraste y sonido aplican al instante.
 - La aleatoriedad se **inyecta** en `JuegoModel` para poder probarlo de forma determinista.
 
@@ -144,14 +145,14 @@ Orden de CSS en `style.css`: `reset` → `variables` → `layout` → `component
 - El canvas **rellena todo su contenedor, sin marco**. Resolución interna = tamaño en pantalla × `devicePixelRatio` (`LienzoView.medir`), que además avisa de la proporción para que el modelo adapte el mundo.
 - Los **sprites** son bitmaps de texto en `sprites.js` (una sola definición para canvas e interfaz). Se pre-renderizan a lienzos de 1 píxel por celda y se escalan con `imageSmoothingEnabled = false`. La interfaz los usa vía `spriteSvg.js`.
 - Los **colores del canvas salen del CSS** (`releerColores`); no se escribe ningún color en JS. Tras cambiar tema o contraste hay que llamar a `releerColores()` (regenera también los sprites).
-- Partículas y parallax son efectos de vista y se desactivan con `prefers-reduced-motion`.
+- El **fondo es un degradado liso**, sin elementos decorativos (las estrellas se eliminaron porque se confundían con los disparos). Las partículas de explosión son un efecto de vista y se desactivan con `prefers-reduced-motion`.
 - Pausa automática al perder foco / ocultar pestaña / abrir un diálogo.
 
 ---
 
 ## Selección por `data-*`
 
-El JS **nunca** busca por clase de estilo ni por `id`. Anclajes: `data-pagina`, `data-lienzo`, `data-cabecera`, `data-cortina`, `data-anuncios`, `data-mandos`, `data-tactil`, `data-ayuda`, `data-ajustes`, `data-fin`, `data-accion`, `data-control` (con `data-valores` en el deslizador o `data-valor-activo`/`data-valor-inactivo` en los interruptores), `data-marcador-*`, `data-cortina-*`, `data-deslizador`, `data-marca`, `data-leyenda-sprite`, `data-cerrar`. Nombres en español y kebab-case, leídos con `dataset`. Los `id` del HTML existen solo para relaciones ARIA y el enlace de salto.
+El JS **nunca** busca por clase de estilo ni por `id`. Anclajes: `data-pagina`, `data-lienzo`, `data-cabecera`, `data-cortina`, `data-anuncios`, `data-mandos`, `data-tactil`, `data-ayuda`, `data-ajustes`, `data-fin`, `data-accion`, `data-control` (el deslizador envía su valor numérico, las tarjetas de teclas su `value` y los interruptores `data-valor-activo`/`data-valor-inactivo`), `data-tecla` con `data-etiqueta-<esquema>` (teclas de la pantalla de inicio), `data-dificultad-resumen`, `data-marcador-*`, `data-cortina-*`, `data-deslizador`, `data-marca`, `data-leyenda-sprite`, `data-cerrar`. Nombres en español y kebab-case, leídos con `dataset`. Los `id` del HTML existen solo para relaciones ARIA y el enlace de salto.
 
 ---
 
@@ -176,7 +177,7 @@ El JS **nunca** busca por clase de estilo ni por `id`. Anclajes: `data-pagina`, 
 
 - **Cromática**: interfaz **monocromática** (un `--tono-interfaz`) con **dos temas** (oscuro por defecto y claro) que solo cambian luminosidades; enemigos **triádicos** fijos (+0°, +120°, +240° sobre `--tono-enemigos`; no hay selección de paleta); colores semánticos de tono fijo (peligro, bonus, vida, suelo, foco). Los temas se activan con clases en `.pagina` y recalculan los derivados porque estos se declaran en `:root, .pagina`.
 - **Jerarquía del marcador**: los puntos son lo más grande y luminoso de la interfaz; las vidas son corazones (forma + color, y vacíos al perderse); la oleada es secundaria.
-- **Ajustes**: deslizador para la dificultad (3 posiciones) e interruptores (`role="switch"`) para controles, tema, alto contraste y sonido.
+- **Ajustes**: deslizador **continuo** (0 a 100) para la dificultad, con pista en degradado verde–ámbar–rojo, pulgar del color del tramo, etiqueta resaltada y resumen de texto (el color nunca es el único canal); tarjetas seleccionables (`radio` nativo) para el esquema de teclas, que muestran las teclas reales; e interruptores (`role="switch"`) para tema, alto contraste y sonido.
 - **Tipográfica**: **dos fuentes contrastadas** — monoespaciada para título y cifras, sans del sistema para texto.
 - **Espacial**: `rem` y escala `xs < s < m < l < xl`; Gestalt (proximidad, semejanza, figura/fondo, región común).
 - **Accesibilidad**: contraste de texto ≥ 4,5:1 y de gráficos/bordes ≥ 3:1, medido en los cuatro modos (oscuro, claro y sus altos contrastes); foco visible; tipo de enemigo codificado por **silueta y color**; `<dialog>` nativo; `aria-live` para eventos; canvas con `aria-label` dinámico; modo alto contraste; `prefers-reduced-motion`; controles táctiles.
@@ -199,10 +200,10 @@ Y en el navegador, sirviendo por HTTP (`python -m http.server 8000`), nunca con 
 1. Carga sin errores en consola.
 2. Comenzar, pausar, reanudar y finalizar funcionan; los botones se habilitan según el estado.
 3. Mover, disparar, destruir enemigos, perder vidas y pasar de oleada.
-4. Abrir ayuda y ajustes (la partida se pausa); mover el deslizador y accionar los cuatro interruptores (tema claro y oscuro incluidos).
+4. Abrir ayuda y ajustes (la partida se pausa); arrastrar el deslizador de dificultad (valores intermedios incluidos), elegir cada esquema de teclas y accionar los interruptores (tema claro y oscuro incluidos).
 5. Jugar entero con teclado; probar controles táctiles en emulación móvil.
 6. Cambiar el tamaño de la ventana y girar el móvil (también en plena partida): el canvas rellena todo el espacio, sin scroll horizontal ni recortes, y nada queda fuera del mundo.
-7. Activar `prefers-reduced-motion`: sin partículas ni parallax.
+7. Activar `prefers-reduced-motion`: sin partículas de explosión, sin animación de sprites ni latido de los puntos.
 8. Cambiar de pestaña: la partida se pausa.
 
 El modelo se prueba sin navegador ejecutándolo con Node (partida simulada con aleatoriedad inyectada: debe terminar, puntuar y avanzar de oleada).

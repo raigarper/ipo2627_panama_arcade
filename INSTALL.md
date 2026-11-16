@@ -33,5 +33,5 @@ Abre <http://localhost:8000>.
 | Página en blanco y error de CORS/módulos | Abierto con `file://` | Servir por HTTP (ver arriba) |
 | Las teclas no mueven la nave | El foco no está en el juego | Pulsa Comenzar (da el foco al canvas) o haz clic en el juego |
 | No suena nada | El sonido está silenciado por defecto | Icono de altavoz o Ajustes → Sonido → Activado |
-| No hay partículas ni parallax | `prefers-reduced-motion` activo en el sistema | Es intencionado (accesibilidad) |
+| No hay partículas de explosión ni animación de sprites | `prefers-reduced-motion` activo en el sistema | Es intencionado (accesibilidad) |
 | Botones táctiles no visibles | Solo aparecen en dispositivos táctiles (`pointer: coarse`) | Usa emulación móvil en las herramientas de desarrollo |

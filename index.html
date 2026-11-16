@@ -104,7 +104,12 @@
                     <p class="escenario__texto" data-cortina-texto>Destruye a los invasores antes de que lleguen hasta ti.</p>
                     <button class="boton boton--primario boton--grande" type="button" data-cortina-boton>Comenzar</button>
                     <p class="escenario__teclas">
-                        <span class="tecla-grupo"><kbd class="tecla">←</kbd><kbd class="tecla">→</kbd> mover</span>
+                        <!-- AvisosView.mostrarControles cambia el texto de estas teclas según el esquema elegido en ajustes. -->
+                        <span class="tecla-grupo">
+                            <kbd class="tecla" data-tecla="izquierda" data-etiqueta-flechas="←" data-etiqueta-wasd="A">←</kbd>
+                            <kbd class="tecla" data-tecla="derecha" data-etiqueta-flechas="→" data-etiqueta-wasd="D">→</kbd>
+                            mover
+                        </span>
                         <span class="tecla-grupo"><kbd class="tecla">Espacio</kbd> disparar</span>
                         <span class="tecla-grupo"><kbd class="tecla">P</kbd> pausa</span>
                     </p>
@@ -171,9 +176,10 @@
         </dialog>
 
         <!-- ================= DIÁLOGO DE AJUSTES =================
-             Cada control lleva data-control (qué ajuste es). AjustesView los enlaza de forma genérica:
-               - deslizador: data-valores lista los valores de cada posición;
-               - interruptor: data-valor-activo / data-valor-inactivo son sus dos valores.
+             Cada control lleva data-control (qué ajuste es). AjustesView los enlaza de forma genérica según su tipo:
+               - deslizador (range): envía su valor numérico;
+               - opción (radio): envía su value;
+               - interruptor (checkbox role=switch): data-valor-activo / data-valor-inactivo son sus dos valores.
              Dificultad: se aplica a la partida siguiente. El resto: efecto inmediato. -->
         <dialog class="modal" data-ajustes aria-labelledby="ajustes-titulo">
             <div class="modal__contenido">
@@ -185,26 +191,41 @@
                 <section class="modal__grupo" aria-labelledby="grupo-partida">
                     <h3 class="modal__etiqueta" id="grupo-partida">Partida</h3>
 
+                    <!-- Dificultad CONTINUA (0 a 100): la pista es un degradado verde-ámbar-rojo, el pulgar toma el
+                         color del tramo y el resumen dice qué implica. AjustesView pone el valor, la clase del tramo y el resumen. -->
                     <div class="deslizador" data-deslizador>
                         <label class="deslizador__titulo" for="dificultad-rango">Dificultad</label>
-                        <input class="deslizador__control" id="dificultad-rango" type="range" min="0" max="2" step="1" value="1"
-                            data-control="dificultad" data-valores="facil normal dificil">
+                        <input class="deslizador__control" id="dificultad-rango" type="range" min="0" max="100" step="1" value="50"
+                            data-control="dificultad">
                         <div class="deslizador__marcas" aria-hidden="true">
-                            <span class="deslizador__marca" data-marca="facil">Fácil</span>
-                            <span class="deslizador__marca" data-marca="normal">Normal</span>
-                            <span class="deslizador__marca" data-marca="dificil">Difícil</span>
+                            <span class="deslizador__marca deslizador__marca--facil" data-marca="facil">Fácil</span>
+                            <span class="deslizador__marca deslizador__marca--normal" data-marca="normal">Normal</span>
+                            <span class="deslizador__marca deslizador__marca--dificil" data-marca="dificil">Difícil</span>
                         </div>
+                        <p class="deslizador__resumen" data-dificultad-resumen></p>
                         <p class="modal__aviso modal__aviso--oculta" data-aviso-dificultad aria-live="polite">Se aplicará en la próxima partida.</p>
                     </div>
 
-                    <label class="interruptor">
-                        <span class="interruptor__texto">
-                            <span class="interruptor__titulo">Mover con A / D</span>
-                            <span class="interruptor__ayuda">Apagado: flechas ← →.</span>
-                        </span>
-                        <input class="interruptor__control" type="checkbox" role="switch"
-                            data-control="controles" data-valor-activo="wasd" data-valor-inactivo="flechas">
-                    </label>
+                    <!-- Esquema de teclas: dos opciones seleccionables (radio nativo) que enseñan las teclas reales. -->
+                    <div class="esquemas" role="radiogroup" aria-labelledby="etiqueta-controles">
+                        <span class="esquemas__etiqueta" id="etiqueta-controles">Teclas para jugar</span>
+                        <label class="esquemas__opcion">
+                            <input class="esquemas__control visualmente-oculto" type="radio" name="controles" value="flechas" data-control="controles" checked>
+                            <span class="esquemas__tarjeta">
+                                <span class="esquemas__titulo">Flechas</span>
+                                <span class="esquemas__fila"><span class="esquemas__teclas"><kbd class="tecla">←</kbd><kbd class="tecla">→</kbd></span> mover</span>
+                                <span class="esquemas__fila"><span class="esquemas__teclas"><kbd class="tecla">Espacio</kbd></span> disparar</span>
+                            </span>
+                        </label>
+                        <label class="esquemas__opcion">
+                            <input class="esquemas__control visualmente-oculto" type="radio" name="controles" value="wasd" data-control="controles">
+                            <span class="esquemas__tarjeta">
+                                <span class="esquemas__titulo">A / D</span>
+                                <span class="esquemas__fila"><span class="esquemas__teclas"><kbd class="tecla">A</kbd><kbd class="tecla">D</kbd></span> mover</span>
+                                <span class="esquemas__fila"><span class="esquemas__teclas"><kbd class="tecla">Espacio</kbd></span> disparar</span>
+                            </span>
+                        </label>
+                    </div>
                 </section>
 
                 <section class="modal__grupo" aria-labelledby="grupo-apariencia">

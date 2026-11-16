@@ -18,7 +18,11 @@ Una formación de invasores desciende por la pantalla. Muévete y destrúyelos a
 - **Vidas:** se muestran como corazones; pierdes uno al recibir un disparo y después quedas protegido 1,6 s.
 - **Oleadas:** cada oleada trae más filas y más velocidad.
 - **Fin:** sin vidas, invasión o botón *Finalizar*.
-- **Ajustes:** deslizador de dificultad (se aplica a la siguiente partida) e interruptores de controles (A/D), tema oscuro, alto contraste y sonido (silenciado por defecto).
+- **Ajustes:**
+  - **Dificultad:** deslizador continuo (0 a 100) con pista verde–ámbar–rojo; vidas, velocidad y cadencia enemiga se interpolan entre Fácil, Normal y Difícil, y un resumen dice qué implica. Se aplica a la siguiente partida.
+  - **Teclas para jugar:** dos tarjetas seleccionables (flechas o A/D) que muestran las teclas reales; la pantalla de inicio enseña las del esquema elegido.
+  - **Interruptores:** tema oscuro, alto contraste y sonido (silenciado por defecto).
+- **Fondo limpio:** degradado liso, sin elementos decorativos, para ver siempre bien los disparos.
 - **Pantalla completa:** el juego ocupa todo el espacio bajo la cabecera, sin marco, y se adapta al móvil (vertical y apaisado), tableta y escritorio. En pantallas anchas caben más enemigos.
 
 ## Cumplimiento del enunciado
@@ -62,7 +66,7 @@ El modelo no conoce el DOM ni el canvas y se puede ejecutar en Node. Los detalle
 - Los enemigos se distinguen por **silueta y color**, nunca solo por color; las vidas perdidas se ven como corazón vacío.
 - Ajustes con controles nativos (`range` y `checkbox` con `role="switch"`): teclado y lectores de pantalla sin código extra.
 - Canvas con `aria-label` dinámico y región `aria-live` para oleadas, impactos y fin de partida.
-- `prefers-reduced-motion`: sin partículas ni parallax.
+- `prefers-reduced-motion`: sin partículas de explosión, sin animación de sprites ni latido de los puntos.
 - Pausa automática al cambiar de pestaña o abrir un diálogo.
 
 ---

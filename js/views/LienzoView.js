@@ -1,7 +1,7 @@
 /**
  * @file LienzoView.js
  * @capa Vista
- * @resumen Renderizado con Canvas API a pantalla completa: fondo, estrellas, sprites clásicos, balas, partículas y suelo.
+ * @resumen Renderizado con Canvas API a pantalla completa: fondo liso, sprites clásicos, balas, explosiones y suelo.
  * @depende JuegoModel (solo ESTADOS), sprites
  * @usadoPor app.js, AppController
  *
@@ -15,8 +15,10 @@
  *  - El canvas ocupa todo su contenedor. El tamaño lógico del mundo lo decide
  *    el modelo a partir de la proporción del canvas (`alRedimensionar`); si la
  *    proporción no coincide exactamente, se centra el mundo y el fondo rellena el resto.
- *  - Las partículas y las estrellas son efectos puramente visuales: viven aquí,
- *    no en el modelo, y se desactivan con `prefers-reduced-motion`.
+ *  - El fondo es un degradado liso, SIN elementos decorativos: así los disparos y
+ *    los enemigos son siempre lo más visible de la pantalla.
+ *  - Las explosiones de partículas son un efecto puramente visual: viven aquí, no
+ *    en el modelo, y se desactivan con `prefers-reduced-motion`.
  */
 
 import { ESTADOS } from "../models/JuegoModel.js";
@@ -24,7 +26,7 @@ import { SPRITES } from "./sprites.js";
 
 /** Nombres de los tokens de color que se leen del CSS (`--color-<nombre>`). */
 const COLORES = Object.freeze([
-    "juego-a", "juego-b", "estrella", "nave", "bala", "bala-enemiga",
+    "juego-a", "juego-b", "nave", "bala", "bala-enemiga",
     "enemigo-0", "enemigo-1", "enemigo-2", "bonus", "suelo",
 ]);
 /** Token de color con el que se pinta cada sprite del canvas. */
@@ -35,7 +37,6 @@ const COLOR_SPRITE = Object.freeze({
     nave: "nave",
     nodriza: "bonus",
 });
-const NUMERO_ESTRELLAS = 90;
 const MAX_PARTICULAS = 240;
 /** Partículas por explosión. */
 const PARTICULAS_POR_EXPLOSION = 16;
@@ -59,15 +60,13 @@ export class LienzoView {
     #colores = {};
     /** @type {Record<string, HTMLCanvasElement[]>} Sprites pre-renderizados (un lienzo por fotograma). */
     #sprites = {};
-    /** @type {{u:number,v:number,capa:number}[]} Estrellas con posición normalizada (0 a 1). */
-    #estrellas = [];
     /** @type {{x:number,y:number,vx:number,vy:number,vida:number,color:string}[]} */
     #particulas = [];
     /** @type {boolean} Preferencia del sistema: sin animaciones decorativas. */
     #movimientoReducido;
     /** @type {number|null} Instante del fotograma anterior, para calcular dt de los efectos. */
     #instanteAnterior = null;
-    /** @type {number} Tiempo de animación acumulado mientras se juega (s): mueve estrellas y cuadros. */
+    /** @type {number} Tiempo de animación acumulado mientras se juega (s): alterna los cuadros de los sprites. */
     #reloj = 0;
 
     /**
@@ -86,7 +85,6 @@ export class LienzoView {
         this.#sonda.hidden = true;
         lienzo.parentElement.appendChild(this.#sonda);
 
-        this.#generarEstrellas();
         this.releerColores();
         new ResizeObserver(() => this.medir()).observe(lienzo);
     }
@@ -191,7 +189,6 @@ export class LienzoView {
         ctx.setTransform(escala, 0, 0, escala, desplazamientoX, desplazamientoY);
         ctx.imageSmoothingEnabled = false;
 
-        this.#pintarEstrellas(modelo);
         this.#pintarSuelo(modelo);
         this.#pintarNodriza(modelo.nodriza);
         const cuadro = this.#movimientoReducido ? 0 : Math.floor(this.#reloj * CAMBIOS_POR_SEGUNDO) % 2;
@@ -236,39 +233,6 @@ export class LienzoView {
             }
         });
         return bitmap;
-    }
-
-    /**
-     * Genera estrellas con un generador congruencial fijo, para que el fondo sea
-     * idéntico en cada carga y no dependa de `Math.random`. Las posiciones son
-     * normalizadas, así valen para cualquier tamaño de mundo.
-     * @returns {void}
-     */
-    #generarEstrellas() {
-        let semilla = 7;
-        const siguiente = () => {
-            semilla = (semilla * 16807) % 2147483647;
-            return semilla / 2147483647;
-        };
-        this.#estrellas = Array.from({ length: NUMERO_ESTRELLAS }, () => ({
-            u: siguiente(),
-            v: siguiente(),
-            capa: 1 + Math.floor(siguiente() * 3),
-        }));
-    }
-
-    /**
-     * Dibuja las estrellas; las capas más cercanas (mayor número) se mueven más rápido (parallax).
-     * @param {import("../models/JuegoModel.js").JuegoModel} modelo - Para conocer el tamaño del mundo.
-     * @returns {void}
-     */
-    #pintarEstrellas(modelo) {
-        const ctx = this.#ctx;
-        ctx.fillStyle = this.#colores.estrella;
-        this.#estrellas.forEach((estrella) => {
-            const y = (estrella.v * modelo.alto + this.#reloj * estrella.capa * 10) % modelo.alto;
-            ctx.fillRect(Math.round(estrella.u * modelo.ancho), Math.round(y), estrella.capa, estrella.capa);
-        });
     }
 
     /**

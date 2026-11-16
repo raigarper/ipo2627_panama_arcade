@@ -23,7 +23,8 @@
  *      inicio/pausa flota sobre el canvas sin cambiar su tamaño.
  *   2. `.salto` (absolute): enlace de "Saltar al juego", fuera de pantalla hasta
  *      que recibe el foco.
- *   3. `.visualmente-oculto` (absolute): contenido solo para lectores de pantalla.
+ *   3. `.visualmente-oculto` (absolute): contenido solo para lectores de pantalla, y
+ *      el radio oculto de cada tarjeta de esquema de teclas (`.esquemas__opcion`, relative).
  *   Nunca se usa `position` para colocar el canvas, los botones ni los marcadores.
  *
  * RESPONSIVE
@@ -186,6 +187,13 @@
     overflow: hidden;
     clip-path: inset(50%);
     white-space: nowrap;
+}
+
+/* ---------- Ancla del radio oculto de cada tarjeta de esquema de teclas ----------
+   El `<input type="radio">` lleva `.visualmente-oculto` (position: absolute); esta regla lo ancla a su
+   propia tarjeta para que no flote por la página. */
+.esquemas__opcion {
+    position: relative;
 }
 
 /* ---------- Elemento auxiliar del canvas: su `color` resuelve las variables a rgb() ---------- */

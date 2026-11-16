@@ -25,6 +25,8 @@ export class AvisosView {
     #texto;
     #boton;
     #anuncios;
+    /** @type {HTMLElement[]} Teclas de movimiento mostradas en la pista (`[data-tecla]`). */
+    #teclas;
 
     /**
      * @param {HTMLElement} cortina - Capa `[data-cortina]` sobre el canvas.
@@ -37,7 +39,22 @@ export class AvisosView {
         this.#texto = cortina.querySelector("[data-cortina-texto]");
         this.#boton = cortina.querySelector("[data-cortina-boton]");
         this.#anuncios = anuncios;
+        this.#teclas = Array.from(cortina.querySelectorAll("[data-tecla]"));
         this.#boton.addEventListener("click", () => callbacks.alConfirmar());
+    }
+
+    /**
+     * Muestra en la pista de la pantalla de inicio las teclas del esquema de
+     * control elegido. Cada tecla trae sus etiquetas en atributos
+     * `data-etiqueta-<esquema>` (p. ej. `data-etiqueta-wasd="A"`), así la vista no
+     * necesita conocer cuáles son las teclas de cada esquema.
+     * @param {string} esquema - Esquema de control activo ("flechas" o "wasd").
+     * @returns {void}
+     */
+    mostrarControles(esquema) {
+        this.#teclas.forEach((tecla) => {
+            tecla.textContent = tecla.getAttribute(`data-etiqueta-${esquema}`) ?? tecla.textContent;
+        });
     }
 
     /**

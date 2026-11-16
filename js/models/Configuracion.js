@@ -12,7 +12,9 @@
  */
 
 /**
- * Parámetros de juego asociados a cada dificultad.
+ * Parámetros de juego de los TRES NIVELES DE REFERENCIA. La dificultad real es
+ * continua (0 a 100) y se interpola entre estos tres puntos: Fácil = 0,
+ * Normal = 50 y Difícil = 100.
  * - vidas: vidas iniciales de la nave.
  * - factorVelocidad: multiplicador de la velocidad de la formación enemiga.
  * - intervaloDisparo: segundos medios entre disparos enemigos.
@@ -23,6 +25,37 @@ export const DIFICULTADES = Object.freeze({
     dificil: Object.freeze({ vidas: 2, factorVelocidad: 1.3, intervaloDisparo: 0.7 }),
 });
 
+/** Valor mínimo (Fácil) de la dificultad continua. */
+export const DIFICULTAD_MIN = 0;
+/** Valor máximo (Difícil) de la dificultad continua. */
+export const DIFICULTAD_MAX = 100;
+/** Valor por defecto (Normal) de la dificultad continua. */
+export const DIFICULTAD_DEFECTO = 50;
+/** Por debajo de este valor la dificultad se etiqueta como "fácil". */
+const UMBRAL_FACIL = 34;
+/** Desde este valor la dificultad se etiqueta como "difícil". */
+const UMBRAL_DIFICIL = 67;
+
+/**
+ * Calcula los parámetros de juego de una dificultad continua, interpolando
+ * linealmente entre los niveles de referencia. Las vidas se redondean porque
+ * no puede haber media vida.
+ * @param {number} valor - Dificultad de 0 (Fácil) a 100 (Difícil).
+ * @returns {{vidas:number, factorVelocidad:number, intervaloDisparo:number}} Parámetros resultantes.
+ */
+function interpolarParametros(valor) {
+    const mitad = (DIFICULTAD_MIN + DIFICULTAD_MAX) / 2;
+    const [desde, hasta, t] = valor <= mitad
+        ? [DIFICULTADES.facil, DIFICULTADES.normal, (valor - DIFICULTAD_MIN) / (mitad - DIFICULTAD_MIN)]
+        : [DIFICULTADES.normal, DIFICULTADES.dificil, (valor - mitad) / (DIFICULTAD_MAX - mitad)];
+    const mezclar = (a, b) => a + (b - a) * t;
+    return Object.freeze({
+        vidas: Math.round(mezclar(desde.vidas, hasta.vidas)),
+        factorVelocidad: mezclar(desde.factorVelocidad, hasta.factorVelocidad),
+        intervaloDisparo: mezclar(desde.intervaloDisparo, hasta.intervaloDisparo),
+    });
+}
+
 /** Esquemas de control disponibles (el disparo es siempre la barra espaciadora). */
 export const CONTROLES = Object.freeze(["flechas", "wasd"]);
 
@@ -30,7 +63,7 @@ export const CONTROLES = Object.freeze(["flechas", "wasd"]);
 export const TEMAS = Object.freeze(["oscuro", "claro"]);
 
 export class Configuracion {
-    /** @type {string} Clave de DIFICULTADES. */
+    /** @type {number} Dificultad continua, de DIFICULTAD_MIN (Fácil) a DIFICULTAD_MAX (Difícil). */
     dificultad;
     /** @type {string} Elemento de CONTROLES. */
     controles;
@@ -43,11 +76,11 @@ export class Configuracion {
 
     /**
      * Crea una configuración validando cada valor.
-     * @param {{dificultad?:string, controles?:string, tema?:string, altoContraste?:boolean, sonido?:boolean}} [valores]
+     * @param {{dificultad?:number, controles?:string, tema?:string, altoContraste?:boolean, sonido?:boolean}} [valores]
      * @throws {RangeError} Si algún valor no está permitido.
      */
-    constructor({ dificultad = "normal", controles = "flechas", tema = "oscuro", altoContraste = false, sonido = false } = {}) {
-        if (!(dificultad in DIFICULTADES)) {
+    constructor({ dificultad = DIFICULTAD_DEFECTO, controles = "flechas", tema = "oscuro", altoContraste = false, sonido = false } = {}) {
+        if (!Number.isFinite(dificultad) || dificultad < DIFICULTAD_MIN || dificultad > DIFICULTAD_MAX) {
             throw new RangeError(`Dificultad no válida: ${dificultad}`);
         }
         if (!CONTROLES.includes(controles)) {
@@ -65,14 +98,25 @@ export class Configuracion {
     }
 
     /**
-     * @returns {{vidas:number, factorVelocidad:number, intervaloDisparo:number}} Parámetros de la dificultad actual.
+     * @returns {{vidas:number, factorVelocidad:number, intervaloDisparo:number}} Parámetros de la dificultad actual (interpolados).
      */
     get parametros() {
-        return DIFICULTADES[this.dificultad];
+        return interpolarParametros(this.dificultad);
     }
 
     /**
-     * @param {string} dificultad - Clave de DIFICULTADES.
+     * Nombre del tramo en el que cae la dificultad, para etiquetas y colores de la interfaz.
+     * @returns {"facil"|"normal"|"dificil"} Tramo de dificultad.
+     */
+    get nivel() {
+        if (this.dificultad < UMBRAL_FACIL) {
+            return "facil";
+        }
+        return this.dificultad < UMBRAL_DIFICIL ? "normal" : "dificil";
+    }
+
+    /**
+     * @param {number} dificultad - Dificultad continua de 0 (Fácil) a 100 (Difícil).
      * @returns {Configuracion} Copia con la dificultad cambiada.
      */
     conDificultad(dificultad) {
